@@ -19,7 +19,7 @@ export const Route = createFileRoute("/")({
 });
 
 function MasterListPage() {
-  const { products, items } = useFamilyCart();
+  const { products, items, loading } = useFamilyCart();
 
   const grouped = useMemo(() => {
     const map = new Map<Category, Product[]>();
@@ -39,7 +39,10 @@ function MasterListPage() {
     <div className="min-h-dvh bg-background">
       <AppHeader />
       <main className="mx-auto max-w-xl px-4 py-6 pb-32 space-y-7">
-        {grouped.length === 0 && (
+        {loading && (
+          <p className="text-center text-muted-foreground mt-12">טוען מוצרים...</p>
+        )}
+        {!loading && grouped.length === 0 && (
           <p className="text-center text-muted-foreground mt-12">אין עדיין מוצרים. הוסיפו את הראשון!</p>
         )}
         {grouped.map(({ category, products }) => (
