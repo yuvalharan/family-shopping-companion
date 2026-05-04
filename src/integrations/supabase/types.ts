@@ -14,7 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      products: {
+        Row: {
+          category: string
+          created_at: string
+          default_quantity: number
+          id: string
+          name: string
+          unit: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          default_quantity?: number
+          id?: string
+          name: string
+          unit: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          default_quantity?: number
+          id?: string
+          name?: string
+          unit?: string
+        }
+        Relationships: []
+      }
+      shopping_items: {
+        Row: {
+          created_at: string
+          id: string
+          is_checked: boolean
+          product_id: string
+          quantity_needed: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_checked?: boolean
+          product_id: string
+          quantity_needed?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_checked?: boolean
+          product_id?: string
+          quantity_needed?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopping_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
