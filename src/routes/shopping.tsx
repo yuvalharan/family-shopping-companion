@@ -18,7 +18,7 @@ export const Route = createFileRoute("/shopping")({
 });
 
 function ShoppingListPage() {
-  const { products, items } = useFamilyCart();
+  const { products, items, loading } = useFamilyCart();
 
   const productMap = useMemo(() => {
     const m = new Map<string, Product>();
