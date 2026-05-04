@@ -1,16 +1,19 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Product, ShoppingItem, Category, Unit } from "./familycart-data";
+import { CATEGORIES } from "./familycart-data";
+import type { Product, ShoppingItem, Unit } from "./familycart-data";
 
 type State = {
   products: Product[];
   items: ShoppingItem[];
+  categories: string[];
   loading: boolean;
 };
 
 let state: State = {
   products: [],
   items: [],
+  categories: [],
   loading: true,
 };
 
@@ -28,13 +31,16 @@ let loaded = false;
 let loadingPromise: Promise<void> | null = null;
 
 async function loadAll() {
-  const [productsRes, itemsRes] = await Promise.all([
+  const [productsRes, itemsRes, categoriesRes] = await Promise.all([
     supabase.from("products").select("*").order("created_at", { ascending: true }),
     supabase.from("shopping_items").select("*").order("created_at", { ascending: true }),
+    supabase.from("categories").select("name").order("created_at", { ascending: true }),
   ]);
+  const dbCategories = (categoriesRes.data ?? []).map((r: { name: string }) => r.name);
   state = {
     products: (productsRes.data ?? []) as unknown as Product[],
     items: (itemsRes.data ?? []) as unknown as ShoppingItem[],
+    categories: dbCategories.length > 0 ? dbCategories : CATEGORIES,
     loading: false,
   };
   emit();
@@ -60,7 +66,7 @@ export function useFamilyCart() {
 }
 
 export const actions = {
-  async addProduct(input: { name: string; category: Category; default_quantity: number; unit: Unit }) {
+  async addProduct(input: { name: string; category: string; default_quantity: number; unit: Unit }) {
     const { data, error } = await supabase
       .from("products")
       .insert(input)
@@ -72,6 +78,29 @@ export const actions = {
     }
     state = { ...state, products: [...state.products, data as unknown as Product] };
     emit();
+  },
+
+  async updateProduct(id: string, input: { name: string; category: string; default_quantity: number; unit: Unit }) {
+    const { error } = await supabase.from("products").update(input).eq("id", id);
+    if (error) {
+      console.error(error);
+      return;
+    }
+    state = {
+      ...state,
+      products: state.products.map((p) => (p.id === id ? { ...p, ...input } : p)),
+    };
+    emit();
+  },
+
+  async addCategory(name: string) {
+    const trimmed = name.trim();
+    if (!trimmed || state.categories.includes(trimmed)) return trimmed;
+    state = { ...state, categories: [...state.categories, trimmed] };
+    emit();
+    const { error } = await supabase.from("categories").insert({ name: trimmed });
+    if (error) console.error(error);
+    return trimmed;
   },
 
   async removeProduct(id: string) {

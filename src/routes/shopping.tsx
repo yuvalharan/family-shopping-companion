@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { Minus, Plus, Trash2, ShoppingCart } from "lucide-react";
 import { AppHeader } from "@/components/familycart/AppHeader";
-import { CATEGORIES, type Category, type Product } from "@/lib/familycart-data";
+import { type Product } from "@/lib/familycart-data";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
 
 export const Route = createFileRoute("/shopping")({
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/shopping")({
 });
 
 function ShoppingListPage() {
-  const { products, items, loading } = useFamilyCart();
+  const { products, items, loading, categories } = useFamilyCart();
 
   const productMap = useMemo(() => {
     const m = new Map<string, Product>();
@@ -27,18 +27,18 @@ function ShoppingListPage() {
   }, [products]);
 
   const grouped = useMemo(() => {
-    const map = new Map<Category, typeof items>();
+    const map = new Map<string, typeof items>();
     for (const item of items) {
       const p = productMap.get(item.product_id);
       if (!p) continue;
       if (!map.has(p.category)) map.set(p.category, []);
       map.get(p.category)!.push(item);
     }
-    return CATEGORIES.filter((c) => map.has(c)).map((c) => ({
+    return categories.filter((c) => map.has(c)).map((c) => ({
       category: c,
       items: map.get(c)!,
     }));
-  }, [items, productMap]);
+  }, [items, productMap, categories]);
 
   const checkedCount = items.filter((i) => i.is_checked).length;
 

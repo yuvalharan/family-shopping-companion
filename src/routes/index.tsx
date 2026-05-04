@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
-import { Plus, Trash2, Check } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Plus, Pencil, Trash2, Check } from "lucide-react";
 import { AppHeader } from "@/components/familycart/AppHeader";
 import { AddProductDialog } from "@/components/familycart/AddProductDialog";
-import { CATEGORIES, type Category, type Product } from "@/lib/familycart-data";
+import { type Product } from "@/lib/familycart-data";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
 
 export const Route = createFileRoute("/")({
@@ -19,19 +19,20 @@ export const Route = createFileRoute("/")({
 });
 
 function MasterListPage() {
-  const { products, items, loading } = useFamilyCart();
+  const { products, items, loading, categories } = useFamilyCart();
+  const [editProduct, setEditProduct] = useState<Product | null>(null);
 
   const grouped = useMemo(() => {
-    const map = new Map<Category, Product[]>();
+    const map = new Map<string, Product[]>();
     for (const p of products) {
       if (!map.has(p.category)) map.set(p.category, []);
       map.get(p.category)!.push(p);
     }
-    return CATEGORIES.filter((c) => map.has(c)).map((c) => ({
+    return categories.filter((c) => map.has(c)).map((c) => ({
       category: c,
       products: map.get(c)!,
     }));
-  }, [products]);
+  }, [products, categories]);
 
   const inCart = (id: string) => items.some((i) => i.product_id === id);
 
@@ -63,6 +64,13 @@ function MasterListPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        onClick={() => setEditProduct(p)}
+                        className="size-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted flex items-center justify-center transition-colors"
+                        aria-label="ערוך מוצר"
+                      >
+                        <Pencil className="size-4" />
+                      </button>
                       <button
                         onClick={() => actions.removeProduct(p.id)}
                         className="size-9 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex items-center justify-center transition-colors"
@@ -101,6 +109,13 @@ function MasterListPage() {
         ))}
       </main>
       <AddProductDialog />
+      {editProduct && (
+        <AddProductDialog
+          product={editProduct}
+          open={true}
+          onOpenChange={(v) => { if (!v) setEditProduct(null); }}
+        />
+      )}
     </div>
   );
 }

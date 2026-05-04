@@ -13,9 +13,9 @@ export const CATEGORIES = [
   "תינוקות",
   "הגיינה",
   "אחר",
-] as const;
+];
 
-export type Category = (typeof CATEGORIES)[number];
+export type Category = string;
 
 export const UNITS = ['ק"ג', "יחידות", "בקבוקים", "ליטר", "גרם", "חבילות"] as const;
 export type Unit = (typeof UNITS)[number];
@@ -23,7 +23,7 @@ export type Unit = (typeof UNITS)[number];
 export type Product = {
   id: string;
   name: string;
-  category: Category;
+  category: string;
   default_quantity: number;
   unit: Unit;
   created_at?: string;
