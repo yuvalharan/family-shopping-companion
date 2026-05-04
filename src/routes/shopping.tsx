@@ -18,7 +18,7 @@ export const Route = createFileRoute("/shopping")({
 });
 
 function ShoppingListPage() {
-  const { products, items } = useFamilyCart();
+  const { products, items, loading } = useFamilyCart();
 
   const productMap = useMemo(() => {
     const m = new Map<string, Product>();
@@ -41,6 +41,17 @@ function ShoppingListPage() {
   }, [items, productMap]);
 
   const checkedCount = items.filter((i) => i.is_checked).length;
+
+  if (loading) {
+    return (
+      <div className="min-h-dvh bg-background">
+        <AppHeader />
+        <main className="mx-auto max-w-xl px-4 py-20 text-center text-muted-foreground">
+          טוען רשימה...
+        </main>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
