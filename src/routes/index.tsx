@@ -239,7 +239,8 @@ function InlineQuantity({ product }: { product: Product }) {
   };
 
   const commit = () => {
-    const n = Math.max(1, Number(value) || 1);
+    const parsed = parseFloat(value);
+    const n = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
     setEditing(false);
     if (n !== product.default_quantity) {
       actions.updateProduct(product.id, {
@@ -257,7 +258,9 @@ function InlineQuantity({ product }: { product: Product }) {
         <Input
           autoFocus
           type="number"
-          min={1}
+          inputMode="decimal"
+          step="any"
+          min={0}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onBlur={commit}
