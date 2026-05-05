@@ -9,6 +9,7 @@ import {
   Trash2,
   Pencil,
 } from "lucide-react";
+import { formatQuantity } from "@/lib/units";
 import { AppHeader } from "@/components/familycart/AppHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
