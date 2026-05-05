@@ -25,6 +25,8 @@ function MasterListPage() {
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [manageOpen, setManageOpen] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [search, setSearch] = useState("");
+  const [activeCat, setActiveCat] = useState<string>("__all__");
 
   const toggle = (cat: string) => {
     setExpanded((prev) => {
@@ -35,8 +37,11 @@ function MasterListPage() {
   };
 
   const grouped = useMemo(() => {
+    const q = search.trim().toLowerCase();
     const map = new Map<string, Product[]>();
     for (const p of products) {
+      if (activeCat !== "__all__" && p.category !== activeCat) continue;
+      if (q && !p.name.toLowerCase().includes(q)) continue;
       if (!map.has(p.category)) map.set(p.category, []);
       map.get(p.category)!.push(p);
     }
@@ -44,7 +49,9 @@ function MasterListPage() {
       category: c,
       products: map.get(c)!,
     }));
-  }, [products, categories]);
+  }, [products, categories, search, activeCat]);
+
+  const isFiltering = search.trim().length > 0 || activeCat !== "__all__";
 
   return (
     <div className="min-h-dvh bg-background">
