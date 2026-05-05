@@ -171,12 +171,17 @@ function ShoppingListsPage() {
                           {listItems.length === 0 ? (
                             <p className="text-sm text-muted-foreground">אין פריטים ברשימה זו.</p>
                           ) : (
-                            listItems.map((it) => (
-                              <div key={it.id} className="text-sm flex justify-between">
-                                <span>{productName(it.product_id)}</span>
-                                <span className="text-muted-foreground">{it.quantity_needed}</span>
-                              </div>
-                            ))
+                            listItems.map((it) => {
+                              const info = productInfo(it.product_id);
+                              return (
+                                <div key={it.id} className="text-sm flex justify-between">
+                                  <span>{info.name}</span>
+                                  <span className="text-muted-foreground">
+                                    {it.quantity_needed} {info.unit}
+                                  </span>
+                                </div>
+                              );
+                            })
                           )}
                         </div>
                       )}
