@@ -52,7 +52,10 @@ function ShoppingListsPage() {
     return { total: it.length, checked: it.filter((i) => i.is_checked).length };
   };
 
-  const productName = (id: string) => products.find((p) => p.id === id)?.name ?? "פריט";
+  const productInfo = (id: string) => {
+    const p = products.find((p) => p.id === id);
+    return { name: p?.name ?? "פריט", unit: p?.unit ?? "" };
+  };
 
   const formatDate = (iso?: string | null) => {
     if (!iso) return "";
