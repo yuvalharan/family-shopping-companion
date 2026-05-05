@@ -399,9 +399,14 @@ function QuickAddPopover({
               <label className="text-sm text-muted-foreground">כמות:</label>
               <Input
                 type="number"
-                min={1}
+                inputMode="decimal"
+                step="any"
+                min={0}
                 value={qty}
-                onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
+                onChange={(e) => {
+                  const n = parseFloat(e.target.value);
+                  setQty(Number.isFinite(n) && n > 0 ? n : 0);
+                }}
                 className="h-9"
               />
               <span className="text-sm text-muted-foreground shrink-0">{product.unit}</span>
