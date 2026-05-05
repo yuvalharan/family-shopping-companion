@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { type Product } from "@/lib/familycart-data";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
+import { formatQuantity } from "@/lib/units";
 
 export const Route = createFileRoute("/")({
   head: () => ({
