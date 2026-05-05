@@ -33,6 +33,7 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange }
   const [unit, setUnit] = useState<Unit>("יחידות");
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCatName, setNewCatName] = useState("");
+  const [newCatError, setNewCatError] = useState<string | null>(null);
   const [savingCat, setSavingCat] = useState(false);
   const newCatInputRef = useRef<HTMLInputElement>(null);
 
