@@ -201,7 +201,7 @@ function ShoppingListsPage() {
                                 <div key={it.id} className="text-sm flex justify-between">
                                   <span>{info.name}</span>
                                   <span className="text-muted-foreground">
-                                    {it.quantity_needed} {info.unit}
+                                    {(() => { const d = formatQuantity(it.quantity_needed, info.unit); return `${d.value} ${d.unit}`; })()}
                                   </span>
                                 </div>
                               );
