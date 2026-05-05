@@ -124,23 +124,26 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange }
             </SelectContent>
           </Select>
           {addingCategory && (
-            <div className="flex gap-2">
-              <Input
-                ref={newCatInputRef}
-                value={newCatName}
-                onChange={(e) => setNewCatName(e.target.value)}
-                placeholder="שם קטגוריה חדשה"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") confirmNewCategory();
-                  if (e.key === "Escape") setAddingCategory(false);
-                }}
-              />
-              <Button size="sm" onClick={confirmNewCategory} disabled={!newCatName.trim() || savingCat}>
-                שמור
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => setAddingCategory(false)}>
-                ביטול
-              </Button>
+            <div className="space-y-1">
+              <div className="flex gap-2">
+                <Input
+                  ref={newCatInputRef}
+                  value={newCatName}
+                  onChange={(e) => { setNewCatName(e.target.value); setNewCatError(null); }}
+                  placeholder="שם קטגוריה חדשה"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") confirmNewCategory();
+                    if (e.key === "Escape") setAddingCategory(false);
+                  }}
+                />
+                <Button size="sm" onClick={confirmNewCategory} disabled={!newCatName.trim() || savingCat}>
+                  שמור
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setAddingCategory(false)}>
+                  ביטול
+                </Button>
+              </div>
+              {newCatError && <p className="text-sm text-destructive">{newCatError}</p>}
             </div>
           )}
         </div>
