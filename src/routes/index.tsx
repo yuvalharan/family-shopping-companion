@@ -66,14 +66,58 @@ function MasterListPage() {
             נהל קטגוריות
           </button>
         </div>
+
+        <div className="relative">
+          <Search className="size-4 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="חיפוש מוצר..."
+            className="pr-9 pl-9 h-11 rounded-xl"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              aria-label="נקה חיפוש"
+              className="absolute left-2 top-1/2 -translate-y-1/2 size-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted"
+            >
+              <X className="size-4" />
+            </button>
+          )}
+        </div>
+
+        <div className="-mx-4 px-4 overflow-x-auto" dir="rtl">
+          <div className="flex gap-2 w-max pb-1">
+            {[{ key: "__all__", label: "הכל" }, ...categories.map((c) => ({ key: c, label: c }))].map((p) => {
+              const active = activeCat === p.key;
+              return (
+                <button
+                  key={p.key}
+                  onClick={() => setActiveCat(p.key)}
+                  className={
+                    "px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors border " +
+                    (active
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-surface text-foreground border-border hover:bg-muted")
+                  }
+                >
+                  {p.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {loading && (
           <p className="text-center text-muted-foreground mt-12">טוען מוצרים...</p>
         )}
         {!loading && grouped.length === 0 && (
-          <p className="text-center text-muted-foreground mt-12">אין עדיין מוצרים. הוסיפו את הראשון!</p>
+          <p className="text-center text-muted-foreground mt-12">
+            {isFiltering || products.length > 0 ? "לא נמצאו מוצרים" : "אין עדיין מוצרים. הוסיפו את הראשון!"}
+          </p>
         )}
         {grouped.map(({ category, products }) => {
-          const isOpen = expanded.has(category);
+          const isOpen = isFiltering || expanded.has(category);
           return (
             <section key={category}>
               <button
