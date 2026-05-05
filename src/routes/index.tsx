@@ -65,23 +65,17 @@ function MasterListPage() {
           <p className="text-center text-muted-foreground mt-12">אין עדיין מוצרים. הוסיפו את הראשון!</p>
         )}
         {grouped.map(({ category, products }) => {
-          const isCollapsed = collapsed.has(category);
+          const isOpen = expanded.has(category);
           return (
             <section key={category}>
               <button
                 onClick={() => toggle(category)}
-                className="w-full flex items-center justify-between mb-3 group"
-                aria-expanded={!isCollapsed}
+                className="w-full text-right bg-surface rounded-2xl shadow-soft px-4 py-3 mb-3 font-bold text-foreground hover:bg-muted transition-colors"
+                aria-expanded={isOpen}
               >
-                <h2 className="text-lg font-semibold text-foreground">{category}</h2>
-                <ChevronDown
-                  className={
-                    "size-5 text-muted-foreground transition-transform duration-200 " +
-                    (isCollapsed ? "-rotate-90" : "")
-                  }
-                />
+                {category}
               </button>
-              {!isCollapsed && (
+              {isOpen && (
                 <div className="space-y-2.5">
                   {products.map((p) => (
                     <div
