@@ -138,7 +138,7 @@ function ShoppingListsPage() {
                   const listItems = items.filter((i) => i.shopping_list_id === list.id);
                   const isOpen = expandedHistory.has(list.id);
                   return (
-                    <div key={list.id} className="bg-surface rounded-2xl shadow-soft overflow-hidden">
+                    <div key={list.id} className="bg-muted/60 border border-border rounded-2xl shadow-soft overflow-hidden">
                       <div className="flex items-center gap-2 p-4">
                         <button
                           onClick={() => toggleHistory(list.id)}
