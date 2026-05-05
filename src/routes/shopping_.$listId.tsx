@@ -106,8 +106,8 @@ function ShoppingListDetailPage() {
     setEditingName(false);
   };
 
-  const handleFinish = async () => {
-    await actions.completeShoppingList(list.id);
+  const handleFinish = () => {
+    void actions.completeShoppingList(list.id);
     navigate({ to: "/shopping" });
   };
 
