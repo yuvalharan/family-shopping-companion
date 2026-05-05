@@ -86,39 +86,103 @@ function ShoppingListsPage() {
   return (
     <div className="min-h-dvh bg-background">
       <AppHeader />
-      <main className="mx-auto max-w-xl px-4 py-6 pb-32 space-y-4">
+      <main className="mx-auto max-w-xl px-4 py-6 pb-32 space-y-6">
         {loading ? (
           <p className="text-center text-muted-foreground mt-12">טוען רשימות...</p>
-        ) : active.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="mx-auto size-20 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
-              <ShoppingCart className="size-9" />
-            </div>
-            <h2 className="text-xl font-semibold mb-2">אין עדיין רשימות קנייה</h2>
-            <p className="text-muted-foreground">צרו רשימה ראשונה כדי להתחיל.</p>
-          </div>
         ) : (
-          active.map((list) => {
-            const s = stats(list.id);
-            return (
-              <Link
-                key={list.id}
-                to="/shopping/$listId"
-                params={{ listId: list.id }}
-                className="block bg-surface rounded-2xl shadow-soft p-4 hover:shadow-lift transition-shadow"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="font-semibold text-base truncate">{list.name}</div>
-                    <div className="text-sm text-muted-foreground mt-0.5">
-                      {s.total} פריטים · {s.checked} בעגלה
-                    </div>
-                  </div>
-                  <div className="text-primary text-sm font-medium shrink-0">פתח</div>
+          <>
+            {active.length === 0 && history.length === 0 ? (
+              <div className="text-center py-20">
+                <div className="mx-auto size-20 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
+                  <ShoppingCart className="size-9" />
                 </div>
-              </Link>
-            );
-          })
+                <h2 className="text-xl font-semibold mb-2">אין עדיין רשימות קנייה</h2>
+                <p className="text-muted-foreground">צרו רשימה ראשונה כדי להתחיל.</p>
+              </div>
+            ) : (
+              <section className="space-y-3">
+                {active.length > 0 && (
+                  <h2 className="text-lg font-semibold">רשימות פעילות</h2>
+                )}
+                {active.map((list) => {
+                  const s = stats(list.id);
+                  return (
+                    <Link
+                      key={list.id}
+                      to="/shopping/$listId"
+                      params={{ listId: list.id }}
+                      className="block bg-surface rounded-2xl shadow-soft p-4 hover:shadow-lift transition-shadow"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="font-semibold text-base truncate">{list.name}</div>
+                          <div className="text-sm text-muted-foreground mt-0.5">
+                            {s.total} פריטים · {s.checked} בעגלה
+                          </div>
+                        </div>
+                        <div className="text-primary text-sm font-medium shrink-0">פתח</div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </section>
+            )}
+
+            {history.length > 0 && (
+              <section className="space-y-3">
+                <h2 className="text-lg font-semibold">היסטוריה</h2>
+                {history.map((list) => {
+                  const listItems = items.filter((i) => i.shopping_list_id === list.id);
+                  const isOpen = expandedHistory.has(list.id);
+                  return (
+                    <div key={list.id} className="bg-surface rounded-2xl shadow-soft overflow-hidden">
+                      <div className="flex items-center gap-2 p-4">
+                        <button
+                          onClick={() => toggleHistory(list.id)}
+                          className="flex-1 flex items-center justify-between gap-3 text-right"
+                          aria-expanded={isOpen}
+                        >
+                          <div className="min-w-0">
+                            <div className="font-semibold truncate">{list.name}</div>
+                            <div className="text-sm text-muted-foreground mt-0.5">
+                              {formatDate(list.completed_at ?? list.created_at)} · {listItems.length} פריטים
+                            </div>
+                          </div>
+                          <ChevronDown
+                            className={
+                              "size-5 text-muted-foreground transition-transform " +
+                              (isOpen ? "" : "-rotate-90")
+                            }
+                          />
+                        </button>
+                        <button
+                          onClick={() => actions.deleteShoppingList(list.id)}
+                          aria-label="מחק רשימה"
+                          className="size-9 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex items-center justify-center transition-colors"
+                        >
+                          <Trash2 className="size-4" />
+                        </button>
+                      </div>
+                      {isOpen && (
+                        <div className="border-t border-border px-4 py-3 space-y-1.5">
+                          {listItems.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">אין פריטים ברשימה זו.</p>
+                          ) : (
+                            listItems.map((it) => (
+                              <div key={it.id} className="text-sm flex justify-between">
+                                <span>{productName(it.product_id)}</span>
+                                <span className="text-muted-foreground">{it.quantity_needed}</span>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </section>
+            )}
+          </>
         )}
       </main>
 
