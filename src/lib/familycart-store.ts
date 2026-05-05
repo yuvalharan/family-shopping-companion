@@ -347,14 +347,19 @@ export const actions = {
     else toast.success("קנייה הושלמה! כל הכבוד 🛒");
   },
 
-  async addItemToList(listId: string, product: Product) {
-    if (state.items.some((i) => i.shopping_list_id === listId && i.product_id === product.id)) return;
+  async addItemToList(listId: string, product: Product, quantity?: number) {
+    const qty = Math.max(1, quantity ?? product.default_quantity);
+    const existing = state.items.find((i) => i.shopping_list_id === listId && i.product_id === product.id);
+    if (existing) {
+      await this.setQuantity(existing.id, qty);
+      return;
+    }
     const { data, error } = await supabase
       .from("shopping_items")
       .insert({
         shopping_list_id: listId,
         product_id: product.id,
-        quantity_needed: product.default_quantity,
+        quantity_needed: qty,
         is_checked: false,
       })
       .select()
