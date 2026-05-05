@@ -27,17 +27,48 @@ export const Route = createFileRoute("/shopping")({
 });
 
 function ShoppingListsPage() {
-  const { lists, items, loading } = useFamilyCart();
+  const { lists, items, products, loading } = useFamilyCart();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [expandedHistory, setExpandedHistory] = useState<Set<string>>(new Set());
 
   const active = useMemo(() => lists.filter((l) => !l.is_completed), [lists]);
+  const history = useMemo(
+    () =>
+      lists
+        .filter((l) => l.is_completed)
+        .sort((a, b) => {
+          const da = new Date(a.completed_at ?? a.created_at ?? 0).getTime();
+          const db = new Date(b.completed_at ?? b.created_at ?? 0).getTime();
+          return db - da;
+        }),
+    [lists],
+  );
 
   const stats = (listId: string) => {
     const it = items.filter((i) => i.shopping_list_id === listId);
     return { total: it.length, checked: it.filter((i) => i.is_checked).length };
+  };
+
+  const productName = (id: string) => products.find((p) => p.id === id)?.name ?? "פריט";
+
+  const formatDate = (iso?: string | null) => {
+    if (!iso) return "";
+    return new Intl.DateTimeFormat("he-IL", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(new Date(iso));
+  };
+
+  const toggleHistory = (id: string) => {
+    setExpandedHistory((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
   };
 
   const handleCreate = async () => {
