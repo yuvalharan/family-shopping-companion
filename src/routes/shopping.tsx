@@ -52,7 +52,10 @@ function ShoppingListsPage() {
     return { total: it.length, checked: it.filter((i) => i.is_checked).length };
   };
 
-  const productName = (id: string) => products.find((p) => p.id === id)?.name ?? "פריט";
+  const productInfo = (id: string) => {
+    const p = products.find((p) => p.id === id);
+    return { name: p?.name ?? "פריט", unit: p?.unit ?? "" };
+  };
 
   const formatDate = (iso?: string | null) => {
     if (!iso) return "";
@@ -135,7 +138,7 @@ function ShoppingListsPage() {
                   const listItems = items.filter((i) => i.shopping_list_id === list.id);
                   const isOpen = expandedHistory.has(list.id);
                   return (
-                    <div key={list.id} className="bg-surface rounded-2xl shadow-soft overflow-hidden">
+                    <div key={list.id} className="bg-muted/60 border border-border rounded-2xl shadow-soft overflow-hidden">
                       <div className="flex items-center gap-2 p-4">
                         <button
                           onClick={() => toggleHistory(list.id)}
@@ -168,12 +171,17 @@ function ShoppingListsPage() {
                           {listItems.length === 0 ? (
                             <p className="text-sm text-muted-foreground">אין פריטים ברשימה זו.</p>
                           ) : (
-                            listItems.map((it) => (
-                              <div key={it.id} className="text-sm flex justify-between">
-                                <span>{productName(it.product_id)}</span>
-                                <span className="text-muted-foreground">{it.quantity_needed}</span>
-                              </div>
-                            ))
+                            listItems.map((it) => {
+                              const info = productInfo(it.product_id);
+                              return (
+                                <div key={it.id} className="text-sm flex justify-between">
+                                  <span>{info.name}</span>
+                                  <span className="text-muted-foreground">
+                                    {it.quantity_needed} {info.unit}
+                                  </span>
+                                </div>
+                              );
+                            })
                           )}
                         </div>
                       )}
