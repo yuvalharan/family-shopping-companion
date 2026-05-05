@@ -29,7 +29,7 @@ import {
 import { actions, useFamilyCart } from "@/lib/familycart-store";
 import type { Product } from "@/lib/familycart-data";
 
-export const Route = createFileRoute("/shopping/$listId")({
+export const Route = createFileRoute("/shopping_/$listId")({
   head: () => ({
     meta: [{ title: "FamilyCart — רשימת קנייה" }],
   }),
