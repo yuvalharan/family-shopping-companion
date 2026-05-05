@@ -433,7 +433,7 @@ function AddItemDialog({
                         <div className="min-w-0">
                           <div className="font-medium truncate">{p.name}</div>
                           <div className="text-xs text-muted-foreground">
-                            {p.default_quantity} {p.unit}
+                            {(() => { const d = formatQuantity(p.default_quantity, p.unit); return `${d.value} ${d.unit}`; })()}
                           </div>
                         </div>
                         {already ? (
