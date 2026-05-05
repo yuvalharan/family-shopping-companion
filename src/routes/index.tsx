@@ -239,7 +239,8 @@ function InlineQuantity({ product }: { product: Product }) {
   };
 
   const commit = () => {
-    const n = Math.max(1, Number(value) || 1);
+    const parsed = parseFloat(value);
+    const n = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
     setEditing(false);
     if (n !== product.default_quantity) {
       actions.updateProduct(product.id, {
@@ -257,7 +258,9 @@ function InlineQuantity({ product }: { product: Product }) {
         <Input
           autoFocus
           type="number"
-          min={1}
+          inputMode="decimal"
+          step="any"
+          min={0}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onBlur={commit}
@@ -360,15 +363,20 @@ function QuickAddPopover({
               <label className="text-sm text-muted-foreground">כמות:</label>
               <Input
                 type="number"
-                min={1}
+                inputMode="decimal"
+                step="any"
+                min={0}
                 value={qty}
-                onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
+                onChange={(e) => {
+                  const n = parseFloat(e.target.value);
+                  setQty(Number.isFinite(n) && n > 0 ? n : 0);
+                }}
                 className="h-9"
               />
               <span className="text-sm text-muted-foreground shrink-0">{product.unit}</span>
             </div>
             <div className="flex gap-2">
-              <Button size="sm" onClick={confirmAdd} disabled={busy} className="flex-1">
+              <Button size="sm" onClick={confirmAdd} disabled={busy || qty <= 0} className="flex-1">
                 הוסף
               </Button>
               <Button size="sm" variant="ghost" onClick={() => setSelectedListId(null)} disabled={busy}>
@@ -391,15 +399,20 @@ function QuickAddPopover({
               <label className="text-sm text-muted-foreground">כמות:</label>
               <Input
                 type="number"
-                min={1}
+                inputMode="decimal"
+                step="any"
+                min={0}
                 value={qty}
-                onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
+                onChange={(e) => {
+                  const n = parseFloat(e.target.value);
+                  setQty(Number.isFinite(n) && n > 0 ? n : 0);
+                }}
                 className="h-9"
               />
               <span className="text-sm text-muted-foreground shrink-0">{product.unit}</span>
             </div>
             <div className="flex gap-2">
-              <Button size="sm" onClick={confirmCreateList} disabled={busy || !newListName.trim()} className="flex-1">
+              <Button size="sm" onClick={confirmCreateList} disabled={busy || !newListName.trim() || qty <= 0} className="flex-1">
                 צור והוסף
               </Button>
               <Button size="sm" variant="ghost" onClick={() => setCreatingList(false)} disabled={busy}>

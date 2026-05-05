@@ -83,10 +83,11 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange }
 
   const submit = () => {
     if (!name.trim()) return;
+    const safeQty = qty > 0 ? qty : 1;
     if (isEdit && product) {
-      actions.updateProduct(product.id, { name: name.trim(), category, default_quantity: qty, unit });
+      actions.updateProduct(product.id, { name: name.trim(), category, default_quantity: safeQty, unit });
     } else {
-      actions.addProduct({ name: name.trim(), category, default_quantity: qty, unit });
+      actions.addProduct({ name: name.trim(), category, default_quantity: safeQty, unit });
     }
     handleOpenChange(false);
   };
@@ -153,9 +154,14 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange }
             <Input
               id="prod-qty"
               type="number"
-              min={1}
+              inputMode="decimal"
+              step="any"
+              min={0}
               value={qty}
-              onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
+              onChange={(e) => {
+                const n = parseFloat(e.target.value);
+                setQty(Number.isFinite(n) && n > 0 ? n : 0);
+              }}
             />
           </div>
           <div className="space-y-2">
