@@ -160,9 +160,7 @@ function MasterListPage() {
                     >
                       <div className="min-w-0">
                         <div className="font-medium truncate">{p.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {p.default_quantity} {p.unit}
-                        </div>
+                        <InlineQuantity product={p} />
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <QuickAddPopover product={p} activeLists={activeLists} />
