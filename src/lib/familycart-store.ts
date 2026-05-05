@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CATEGORIES } from "./familycart-data";
-import type { Product, ShoppingItem, Unit } from "./familycart-data";
+import type { Product, ShoppingItem, ShoppingList, Unit } from "./familycart-data";
 
 type State = {
   products: Product[];
   items: ShoppingItem[];
+  lists: ShoppingList[];
   categories: string[];
   loading: boolean;
 };
@@ -14,6 +15,7 @@ type State = {
 let state: State = {
   products: [],
   items: [],
+  lists: [],
   categories: [],
   loading: true,
 };
@@ -67,6 +69,27 @@ function startRealtimeSync() {
         emit();
       }
     })
+    .on("postgres_changes", { event: "*", schema: "public", table: "shopping_lists" }, (payload) => {
+      if (payload.eventType === "INSERT") {
+        const row = payload.new as unknown as ShoppingList;
+        if (!state.lists.some((l) => l.id === row.id)) {
+          state = { ...state, lists: [...state.lists, row] };
+          emit();
+        }
+      } else if (payload.eventType === "UPDATE") {
+        const row = payload.new as unknown as ShoppingList;
+        state = { ...state, lists: state.lists.map((l) => (l.id === row.id ? row : l)) };
+        emit();
+      } else if (payload.eventType === "DELETE") {
+        const id = (payload.old as { id: string }).id;
+        state = {
+          ...state,
+          lists: state.lists.filter((l) => l.id !== id),
+          items: state.items.filter((i) => i.shopping_list_id !== id),
+        };
+        emit();
+      }
+    })
     .on("postgres_changes", { event: "*", schema: "public", table: "categories" }, (payload) => {
       if (payload.eventType === "INSERT") {
         const name = (payload.new as { name: string }).name;
@@ -83,12 +106,8 @@ function startRealtimeSync() {
     .subscribe((status, err) => {
       if (err) {
         console.error("[Realtime] subscription error:", err);
-      } else {
-        console.log("[Realtime] status:", status);
-        if (status === "SUBSCRIBED") {
-          // Re-fetch on every (re)connect to catch any events missed during the gap.
-          loadAll();
-        }
+      } else if (status === "SUBSCRIBED") {
+        loadAll();
       }
     });
 }
@@ -114,15 +133,17 @@ let loaded = false;
 let loadingPromise: Promise<void> | null = null;
 
 async function loadAll() {
-  const [productsRes, itemsRes, categoriesRes] = await Promise.all([
+  const [productsRes, itemsRes, listsRes, categoriesRes] = await Promise.all([
     supabase.from("products").select("*").order("created_at", { ascending: true }),
     supabase.from("shopping_items").select("*").order("created_at", { ascending: true }),
+    supabase.from("shopping_lists").select("*").order("created_at", { ascending: false }),
     supabase.from("categories").select("name").order("created_at", { ascending: true }),
   ]);
-  const dbCategories = (categoriesRes.data ?? []).map((r: { name: string }) => r.name);
+  const dbCategories = ((categoriesRes.data ?? []) as Array<{ name: string }>).map((r) => r.name);
   state = {
     products: (productsRes.data ?? []) as unknown as Product[],
     items: (itemsRes.data ?? []) as unknown as ShoppingItem[],
+    lists: (listsRes.data ?? []) as unknown as ShoppingList[],
     categories: dbCategories.length > 0 ? dbCategories : CATEGORIES,
     loading: false,
   };
@@ -145,7 +166,6 @@ export function useFamilyCart() {
   const [snapshot, setSnapshot] = useState<State>(getSnapshot);
 
   useEffect(() => {
-    // Catch any state changes that arrived before the subscription was registered
     setSnapshot(getSnapshot());
     const unsubscribe = subscribe(() => setSnapshot(getSnapshot()));
     ensureLoaded();
@@ -157,11 +177,7 @@ export function useFamilyCart() {
 
 export const actions = {
   async addProduct(input: { name: string; category: string; default_quantity: number; unit: Unit }) {
-    const { data, error } = await supabase
-      .from("products")
-      .insert(input)
-      .select()
-      .single();
+    const { data, error } = await supabase.from("products").insert(input).select().single();
     if (error || !data) {
       toast.error("שגיאה בשמירה, אנא נסה שוב");
       return;
@@ -210,11 +226,72 @@ export const actions = {
     toast.success("המוצר הוסר");
   },
 
-  async addToShoppingList(product: Product) {
-    if (state.items.some((i) => i.product_id === product.id)) return;
+  async createShoppingList(name: string): Promise<ShoppingList | null> {
+    const trimmed = name.trim();
+    if (!trimmed) return null;
+    const { data, error } = await supabase
+      .from("shopping_lists")
+      .insert({ name: trimmed })
+      .select()
+      .single();
+    if (error || !data) {
+      toast.error("שגיאה ביצירת הרשימה");
+      return null;
+    }
+    const list = data as unknown as ShoppingList;
+    state = { ...state, lists: [list, ...state.lists] };
+    emit();
+    toast.success("הרשימה נוצרה");
+    return list;
+  },
+
+  async renameShoppingList(id: string, name: string) {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    state = {
+      ...state,
+      lists: state.lists.map((l) => (l.id === id ? { ...l, name: trimmed } : l)),
+    };
+    emit();
+    const { error } = await supabase.from("shopping_lists").update({ name: trimmed }).eq("id", id);
+    if (error) toast.error("שגיאה בשמירה");
+  },
+
+  async deleteShoppingList(id: string) {
+    const { error } = await supabase.from("shopping_lists").delete().eq("id", id);
+    if (error) {
+      toast.error("שגיאה במחיקה");
+      return;
+    }
+    state = {
+      ...state,
+      lists: state.lists.filter((l) => l.id !== id),
+      items: state.items.filter((i) => i.shopping_list_id !== id),
+    };
+    emit();
+    toast.success("הרשימה נמחקה");
+  },
+
+  async completeShoppingList(id: string) {
+    state = {
+      ...state,
+      lists: state.lists.map((l) => (l.id === id ? { ...l, is_completed: true } : l)),
+    };
+    emit();
+    const { error } = await supabase
+      .from("shopping_lists")
+      .update({ is_completed: true })
+      .eq("id", id);
+    if (error) toast.error("שגיאה בסיום הרשימה");
+    else toast.success("הקנייה הסתיימה");
+  },
+
+  async addItemToList(listId: string, product: Product) {
+    if (state.items.some((i) => i.shopping_list_id === listId && i.product_id === product.id)) return;
     const { data, error } = await supabase
       .from("shopping_items")
       .insert({
+        shopping_list_id: listId,
         product_id: product.id,
         quantity_needed: product.default_quantity,
         is_checked: false,
@@ -222,23 +299,21 @@ export const actions = {
       .select()
       .single();
     if (error || !data) {
-      toast.error("שגיאה בשמירה, אנא נסה שוב");
+      toast.error("שגיאה בשמירה");
       return;
     }
     state = { ...state, items: [...state.items, data as unknown as ShoppingItem] };
     emit();
-    toast.success("המוצר נוסף לרשימה");
   },
 
-  async removeFromShoppingList(itemId: string) {
+  async removeItem(itemId: string) {
     const { error } = await supabase.from("shopping_items").delete().eq("id", itemId);
     if (error) {
-      toast.error("שגיאה בשמירה, אנא נסה שוב");
+      toast.error("שגיאה בשמירה");
       return;
     }
     state = { ...state, items: state.items.filter((i) => i.id !== itemId) };
     emit();
-    toast.success("המוצר הוסר מהרשימה");
   },
 
   async toggleChecked(itemId: string) {
@@ -250,11 +325,8 @@ export const actions = {
       items: state.items.map((i) => (i.id === itemId ? { ...i, is_checked: next } : i)),
     };
     emit();
-    const { error } = await supabase
-      .from("shopping_items")
-      .update({ is_checked: next })
-      .eq("id", itemId);
-    if (error) toast.error("שגיאה בשמירה, אנא נסה שוב");
+    const { error } = await supabase.from("shopping_items").update({ is_checked: next }).eq("id", itemId);
+    if (error) toast.error("שגיאה בשמירה");
   },
 
   async setQuantity(itemId: string, qty: number) {
@@ -268,19 +340,6 @@ export const actions = {
       .from("shopping_items")
       .update({ quantity_needed: value })
       .eq("id", itemId);
-    if (error) toast.error("שגיאה בשמירה, אנא נסה שוב");
-  },
-
-  async clearChecked() {
-    const checkedIds = state.items.filter((i) => i.is_checked).map((i) => i.id);
-    if (checkedIds.length === 0) return;
-    const { error } = await supabase.from("shopping_items").delete().in("id", checkedIds);
-    if (error) {
-      toast.error("שגיאה בשמירה, אנא נסה שוב");
-      return;
-    }
-    state = { ...state, items: state.items.filter((i) => !i.is_checked) };
-    emit();
-    toast.success("הפריטים המסומנים הוסרו");
+    if (error) toast.error("שגיאה בשמירה");
   },
 };

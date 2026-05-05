@@ -5,7 +5,7 @@ export function AppHeader() {
   const { pathname } = useLocation();
   const tabs = [
     { to: "/", label: "רשימה ראשית" },
-    { to: "/shopping", label: "רשימת קניות" },
+    { to: "/shopping", label: "רשימות קנייה" },
   ] as const;
 
   return (
@@ -18,7 +18,7 @@ export function AppHeader() {
       </div>
       <nav className="mx-auto max-w-xl px-4 flex gap-2">
         {tabs.map((t) => {
-          const active = pathname === t.to;
+          const active = t.to === "/" ? pathname === "/" : pathname.startsWith(t.to);
           return (
             <Link
               key={t.to}

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ShoppingRouteImport } from './routes/shopping'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ShoppingListIdRouteImport } from './routes/shopping_.$listId'
 
 const ShoppingRoute = ShoppingRouteImport.update({
   id: '/shopping',
@@ -22,31 +23,40 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShoppingListIdRoute = ShoppingListIdRouteImport.update({
+  id: '/shopping_/$listId',
+  path: '/shopping/$listId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/shopping': typeof ShoppingRoute
+  '/shopping/$listId': typeof ShoppingListIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/shopping': typeof ShoppingRoute
+  '/shopping/$listId': typeof ShoppingListIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/shopping': typeof ShoppingRoute
+  '/shopping_/$listId': typeof ShoppingListIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/shopping'
+  fullPaths: '/' | '/shopping' | '/shopping/$listId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/shopping'
-  id: '__root__' | '/' | '/shopping'
+  to: '/' | '/shopping' | '/shopping/$listId'
+  id: '__root__' | '/' | '/shopping' | '/shopping_/$listId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ShoppingRoute: typeof ShoppingRoute
+  ShoppingListIdRoute: typeof ShoppingListIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,22 +75,21 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/shopping_/$listId': {
+      id: '/shopping_/$listId'
+      path: '/shopping/$listId'
+      fullPath: '/shopping/$listId'
+      preLoaderRoute: typeof ShoppingListIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ShoppingRoute: ShoppingRoute,
+  ShoppingListIdRoute: ShoppingListIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

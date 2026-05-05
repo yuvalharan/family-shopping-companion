@@ -1,159 +1,129 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
-import { Minus, Plus, Trash2, ShoppingCart } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { Plus, ShoppingCart } from "lucide-react";
 import { AppHeader } from "@/components/familycart/AppHeader";
-import { type Product } from "@/lib/familycart-data";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
 
 export const Route = createFileRoute("/shopping")({
   head: () => ({
     meta: [
-      { title: "FamilyCart — רשימת קניות" },
-      { name: "description", content: "רשימת הקניות הנוכחית — סמנו פריטים בזמן הקנייה." },
-      { property: "og:title", content: "FamilyCart — רשימת קניות" },
-      { property: "og:description", content: "מה צריך לקנות עכשיו, מסודר לפי קטגוריות." },
+      { title: "FamilyCart — רשימות קנייה" },
+      { name: "description", content: "ניהול רשימות הקנייה הפעילות והארכיון." },
+      { property: "og:title", content: "FamilyCart — רשימות קנייה" },
+      { property: "og:description", content: "כל רשימות הקנייה במקום אחד." },
     ],
   }),
-  component: ShoppingListPage,
+  component: ShoppingListsPage,
 });
 
-function ShoppingListPage() {
-  const { products, items, loading, categories } = useFamilyCart();
+function ShoppingListsPage() {
+  const { lists, items, loading } = useFamilyCart();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [creating, setCreating] = useState(false);
 
-  const productMap = useMemo(() => {
-    const m = new Map<string, Product>();
-    products.forEach((p) => m.set(p.id, p));
-    return m;
-  }, [products]);
+  const active = useMemo(() => lists.filter((l) => !l.is_completed), [lists]);
 
-  const grouped = useMemo(() => {
-    const map = new Map<string, typeof items>();
-    for (const item of items) {
-      const p = productMap.get(item.product_id);
-      if (!p) continue;
-      if (!map.has(p.category)) map.set(p.category, []);
-      map.get(p.category)!.push(item);
+  const stats = (listId: string) => {
+    const it = items.filter((i) => i.shopping_list_id === listId);
+    return { total: it.length, checked: it.filter((i) => i.is_checked).length };
+  };
+
+  const handleCreate = async () => {
+    if (!name.trim()) return;
+    setCreating(true);
+    const list = await actions.createShoppingList(name);
+    setCreating(false);
+    if (list) {
+      setOpen(false);
+      setName("");
+      navigate({ to: "/shopping/$listId", params: { listId: list.id } });
     }
-    return categories.filter((c) => map.has(c)).map((c) => ({
-      category: c,
-      items: map.get(c)!,
-    }));
-  }, [items, productMap, categories]);
-
-  const checkedCount = items.filter((i) => i.is_checked).length;
-
-  if (loading) {
-    return (
-      <div className="min-h-dvh bg-background">
-        <AppHeader />
-        <main className="mx-auto max-w-xl px-4 py-20 text-center text-muted-foreground">
-          טוען רשימה...
-        </main>
-      </div>
-    );
-  }
-
-  if (items.length === 0) {
-    return (
-      <div className="min-h-dvh bg-background">
-        <AppHeader />
-        <main className="mx-auto max-w-xl px-4 py-20 text-center">
-          <div className="mx-auto size-20 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
-            <ShoppingCart className="size-9" />
-          </div>
-          <h2 className="text-xl font-semibold mb-2">רשימת הקניות ריקה</h2>
-          <p className="text-muted-foreground">
-            עברו לרשימה הראשית והוסיפו את המוצרים שצריך לקנות.
-          </p>
-        </main>
-      </div>
-    );
-  }
+  };
 
   return (
     <div className="min-h-dvh bg-background">
       <AppHeader />
-      <main className="mx-auto max-w-xl px-4 py-6 pb-32 space-y-7">
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            {items.length} פריטים · {checkedCount} סומנו
-          </p>
-          {checkedCount > 0 && (
-            <button
-              onClick={actions.clearChecked}
-              className="text-sm text-primary font-medium hover:underline"
-            >
-              נקה מסומנים
-            </button>
-          )}
-        </div>
-
-        {grouped.map(({ category, items }) => (
-          <section key={category}>
-            <h2 className="text-lg font-semibold mb-3">{category}</h2>
-            <div className="space-y-2.5">
-              {items.map((item) => {
-                const product = productMap.get(item.product_id)!;
-                return (
-                  <div
-                    key={item.id}
-                    className={
-                      "bg-surface rounded-2xl shadow-soft p-4 flex items-center justify-between gap-3 transition-opacity " +
-                      (item.is_checked ? "opacity-55" : "")
-                    }
-                  >
-                    <label className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={item.is_checked}
-                        onChange={() => actions.toggleChecked(item.id)}
-                        className="size-5 accent-primary shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <div
-                          className={
-                            "font-medium truncate " +
-                            (item.is_checked ? "line-through" : "")
-                          }
-                        >
-                          {product.name}
-                        </div>
-                        <div className="text-sm text-muted-foreground">{product.unit}</div>
-                      </div>
-                    </label>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        onClick={() => actions.setQuantity(item.id, item.quantity_needed - 1)}
-                        className="size-8 rounded-full border border-border text-foreground hover:bg-muted flex items-center justify-center"
-                        aria-label="הפחת"
-                      >
-                        <Minus className="size-3.5" />
-                      </button>
-                      <span className="w-7 text-center font-medium tabular-nums">
-                        {item.quantity_needed}
-                      </span>
-                      <button
-                        onClick={() => actions.setQuantity(item.id, item.quantity_needed + 1)}
-                        className="size-8 rounded-full border border-border text-foreground hover:bg-muted flex items-center justify-center"
-                        aria-label="הוסף"
-                      >
-                        <Plus className="size-3.5" />
-                      </button>
-                      <button
-                        onClick={() => actions.removeFromShoppingList(item.id)}
-                        className="size-8 ms-1 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex items-center justify-center"
-                        aria-label="הסר"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </button>
+      <main className="mx-auto max-w-xl px-4 py-6 pb-32 space-y-4">
+        {loading ? (
+          <p className="text-center text-muted-foreground mt-12">טוען רשימות...</p>
+        ) : active.length === 0 ? (
+          <div className="text-center py-20">
+            <div className="mx-auto size-20 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
+              <ShoppingCart className="size-9" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">אין עדיין רשימות קנייה</h2>
+            <p className="text-muted-foreground">צרו רשימה ראשונה כדי להתחיל.</p>
+          </div>
+        ) : (
+          active.map((list) => {
+            const s = stats(list.id);
+            return (
+              <Link
+                key={list.id}
+                to="/shopping/$listId"
+                params={{ listId: list.id }}
+                className="block bg-surface rounded-2xl shadow-soft p-4 hover:shadow-lift transition-shadow"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="font-semibold text-base truncate">{list.name}</div>
+                    <div className="text-sm text-muted-foreground mt-0.5">
+                      {s.total} פריטים · {s.checked} בעגלה
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </section>
-        ))}
+                  <div className="text-primary text-sm font-medium shrink-0">פתח</div>
+                </div>
+              </Link>
+            );
+          })
+        )}
       </main>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button
+            size="lg"
+            className="fixed bottom-5 inset-x-4 mx-auto max-w-lg z-30 h-14 rounded-2xl text-base font-semibold shadow-lift"
+          >
+            <Plus className="size-5 ms-1" />
+            רשימה חדשה
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-right">רשימת קנייה חדשה</DialogTitle>
+          </DialogHeader>
+          <Input
+            autoFocus
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="לדוגמה: שופרסל שישי"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleCreate();
+            }}
+          />
+          <DialogFooter className="sm:justify-start gap-2">
+            <Button onClick={handleCreate} disabled={!name.trim() || creating}>
+              צור רשימה
+            </Button>
+            <Button variant="ghost" onClick={() => setOpen(false)}>
+              ביטול
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
