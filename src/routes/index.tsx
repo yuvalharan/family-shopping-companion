@@ -70,7 +70,7 @@ function MasterListPage() {
             <section key={category}>
               <button
                 onClick={() => toggle(category)}
-                className="w-full text-right bg-surface rounded-2xl shadow-soft px-4 py-3 mb-3 font-bold text-foreground hover:bg-muted transition-colors"
+                className="w-full text-right bg-surface rounded-2xl shadow-soft px-4 py-3 mb-3 font-bold text-foreground hover:bg-muted transition-colors border border-foreground"
                 aria-expanded={isOpen}
               >
                 {category}
