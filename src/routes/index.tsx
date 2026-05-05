@@ -189,7 +189,11 @@ function MasterListPage() {
           );
         })}
       </main>
-      <AddProductDialog open={addOpen} onOpenChange={setAddOpen} />
+      {isEmpty ? (
+        <AddProductDialog open={addOpen} onOpenChange={setAddOpen} />
+      ) : (
+        <AddProductDialog />
+      )}
       {editProduct && (
         <AddProductDialog
           product={editProduct}
