@@ -9,6 +9,7 @@ import {
   Trash2,
   Pencil,
 } from "lucide-react";
+import { formatQuantity } from "@/lib/units";
 import { AppHeader } from "@/components/familycart/AppHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -304,7 +305,7 @@ function ItemRow({
           <div className="font-medium truncate">
             {product.name}
           </div>
-          <div className="text-sm text-muted-foreground">{product.unit}</div>
+          <div className="text-sm text-muted-foreground">{formatQuantity(qty, product.unit).unit}</div>
         </div>
       </label>
       <div className="flex items-center gap-1 shrink-0">
@@ -315,7 +316,7 @@ function ItemRow({
         >
           <Minus className="size-3.5" />
         </button>
-        <span className="w-7 text-center font-medium tabular-nums">{qty}</span>
+        <span className="min-w-7 px-1 text-center font-medium tabular-nums">{formatQuantity(qty, product.unit).value}</span>
         <button
           onClick={onInc}
           className="size-8 rounded-full border border-border hover:bg-muted flex items-center justify-center"
@@ -432,7 +433,7 @@ function AddItemDialog({
                         <div className="min-w-0">
                           <div className="font-medium truncate">{p.name}</div>
                           <div className="text-xs text-muted-foreground">
-                            {p.default_quantity} {p.unit}
+                            {(() => { const d = formatQuantity(p.default_quantity, p.unit); return `${d.value} ${d.unit}`; })()}
                           </div>
                         </div>
                         {already ? (

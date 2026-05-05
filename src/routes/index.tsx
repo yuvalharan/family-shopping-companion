@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { type Product } from "@/lib/familycart-data";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
+import { formatQuantity } from "@/lib/units";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -271,6 +272,7 @@ function InlineQuantity({ product }: { product: Product }) {
     );
   }
 
+  const display = formatQuantity(product.default_quantity, product.unit);
   return (
     <div className="flex items-center gap-1.5 mt-1">
       <button
@@ -278,9 +280,9 @@ function InlineQuantity({ product }: { product: Product }) {
         aria-label="ערוך כמות"
         className="inline-flex items-center justify-center min-w-9 h-7 px-2 text-sm rounded-md border border-input bg-muted text-foreground hover:border-ring hover:bg-muted/70 transition-colors"
       >
-        {product.default_quantity}
+        {display.value}
       </button>
-      <span className="text-sm text-muted-foreground">{product.unit}</span>
+      <span className="text-sm text-muted-foreground">{display.unit}</span>
     </div>
   );
 }

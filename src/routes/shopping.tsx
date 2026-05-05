@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Plus, ShoppingCart, ChevronDown, Trash2 } from "lucide-react";
+import { formatQuantity } from "@/lib/units";
 import { AppHeader } from "@/components/familycart/AppHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -201,7 +202,7 @@ function ShoppingListsPage() {
                                 <div key={it.id} className="text-sm flex justify-between">
                                   <span>{info.name}</span>
                                   <span className="text-muted-foreground">
-                                    {it.quantity_needed} {info.unit}
+                                    {(() => { const d = formatQuantity(it.quantity_needed, info.unit); return `${d.value} ${d.unit}`; })()}
                                   </span>
                                 </div>
                               );
