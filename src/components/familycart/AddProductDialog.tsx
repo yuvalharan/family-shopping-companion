@@ -69,11 +69,16 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange }
     const trimmed = newCatName.trim();
     if (!trimmed) return;
     setSavingCat(true);
-    await actions.addCategory(trimmed);
-    setCategory(trimmed);
+    setNewCatError(null);
+    const result = await actions.addCategory(trimmed);
+    setSavingCat(false);
+    if (!result.ok) {
+      setNewCatError(result.error);
+      return;
+    }
+    setCategory(result.name);
     setAddingCategory(false);
     setNewCatName("");
-    setSavingCat(false);
   };
 
   const submit = () => {
