@@ -12,7 +12,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
+import type { ShoppingList } from "@/lib/familycart-data";
 
 export const Route = createFileRoute("/shopping")({
   head: () => ({
