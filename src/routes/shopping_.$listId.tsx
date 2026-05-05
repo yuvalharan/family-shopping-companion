@@ -269,7 +269,7 @@ function ItemRow({
           className="size-5 accent-primary shrink-0"
         />
         <div className="min-w-0">
-          <div className={"font-medium truncate " + (checked ? "line-through" : "")}>
+          <div className="font-medium truncate">
             {product.name}
           </div>
           <div className="text-sm text-muted-foreground">{product.unit}</div>
@@ -416,9 +416,11 @@ function AddItemDialog({
             ))}
           </div>
         </div>
-        <Button className="w-full mt-2" onClick={() => onOpenChange(false)}>
-          סיום
-        </Button>
+        <div className="mt-2">
+          <Button className="w-full" onClick={() => onOpenChange(false)}>
+            סיום
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

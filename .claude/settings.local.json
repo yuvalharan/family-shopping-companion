@@ -5,7 +5,10 @@
       "Bash(npx tsc *)",
       "PowerShell(Get-NetTCPConnection *)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\yuval\\\\OneDrive\\\\Desktop\\\\vibe-coding\\\\shopping-app\\\\family-shopping-companion\\\\src\" -Recurse -Include \"*.tsx\",\"*.jsx\")",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(grep -v \"^.*\\\\\\\\\\\\\\\\ui\\\\\\\\\\\\\\\\\")"
     ]
   }
 }
