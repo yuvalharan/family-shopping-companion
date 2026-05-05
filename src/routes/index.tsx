@@ -412,7 +412,7 @@ function QuickAddPopover({
               <span className="text-sm text-muted-foreground shrink-0">{product.unit}</span>
             </div>
             <div className="flex gap-2">
-              <Button size="sm" onClick={confirmCreateList} disabled={busy || !newListName.trim()} className="flex-1">
+              <Button size="sm" onClick={confirmCreateList} disabled={busy || !newListName.trim() || qty <= 0} className="flex-1">
                 צור והוסף
               </Button>
               <Button size="sm" variant="ghost" onClick={() => setCreatingList(false)} disabled={busy}>
