@@ -153,9 +153,14 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange }
             <Input
               id="prod-qty"
               type="number"
-              min={1}
+              inputMode="decimal"
+              step="any"
+              min={0}
               value={qty}
-              onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
+              onChange={(e) => {
+                const n = parseFloat(e.target.value);
+                setQty(Number.isFinite(n) && n > 0 ? n : 0);
+              }}
             />
           </div>
           <div className="space-y-2">
