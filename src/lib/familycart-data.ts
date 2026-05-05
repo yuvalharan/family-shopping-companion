@@ -33,6 +33,7 @@ export type ShoppingList = {
   id: string;
   name: string;
   is_completed: boolean;
+  completed_at?: string | null;
   created_at?: string;
 };
 
