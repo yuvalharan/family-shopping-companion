@@ -183,8 +183,8 @@ function ShoppingListsPage() {
                           />
                         </button>
                         <button
-                          onClick={() => actions.deleteShoppingList(list.id)}
-                          aria-label="מחק רשימה"
+                          onClick={() => setConfirmDelete({ list, isHistory: true })}
+                          aria-label="מחק מהיסטוריה"
                           className="size-9 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex items-center justify-center transition-colors"
                         >
                           <Trash2 className="size-4" />
