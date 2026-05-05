@@ -5,6 +5,7 @@ import { AppHeader } from "@/components/familycart/AppHeader";
 import { AddProductDialog } from "@/components/familycart/AddProductDialog";
 import { ManageCategoriesDialog } from "@/components/familycart/ManageCategoriesDialog";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { type Product } from "@/lib/familycart-data";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
 
@@ -67,7 +68,7 @@ function MasterListPage() {
           </button>
         </div>
 
-        <div className="relative">
+        <div className="relative mx-auto w-3/5">
           <Search className="size-4 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
           <Input
             value={search}
@@ -86,27 +87,17 @@ function MasterListPage() {
           )}
         </div>
 
-        <div className="-mx-4 px-4 overflow-x-auto" dir="rtl">
-          <div className="flex gap-2 w-max pb-1">
-            {[{ key: "__all__", label: "הכל" }, ...categories.map((c) => ({ key: c, label: c }))].map((p) => {
-              const active = activeCat === p.key;
-              return (
-                <button
-                  key={p.key}
-                  onClick={() => setActiveCat(p.key)}
-                  className={
-                    "px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors border " +
-                    (active
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-surface text-foreground border-border hover:bg-muted")
-                  }
-                >
-                  {p.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <Select value={activeCat} onValueChange={setActiveCat}>
+          <SelectTrigger className="h-11 rounded-xl">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">כל הקטגוריות</SelectItem>
+            {categories.map((c) => (
+              <SelectItem key={c} value={c}>{c}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {loading && (
           <p className="text-center text-muted-foreground mt-12">טוען מוצרים...</p>
