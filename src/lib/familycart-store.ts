@@ -333,14 +333,15 @@ export const actions = {
   },
 
   async completeShoppingList(id: string) {
+    const completedAt = new Date().toISOString();
     state = {
       ...state,
-      lists: state.lists.map((l) => (l.id === id ? { ...l, is_completed: true } : l)),
+      lists: state.lists.map((l) => (l.id === id ? { ...l, is_completed: true, completed_at: completedAt } : l)),
     };
     emit();
     const { error } = await supabase
       .from("shopping_lists")
-      .update({ is_completed: true })
+      .update({ is_completed: true, completed_at: completedAt })
       .eq("id", id);
     if (error) toast.error("שגיאה בסיום הרשימה");
     else toast.success("הקנייה הסתיימה");
