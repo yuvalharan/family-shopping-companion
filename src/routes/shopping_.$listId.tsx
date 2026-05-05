@@ -343,7 +343,7 @@ function AddItemDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[85vh] flex flex-col" dir="rtl">
+      <DialogContent className="max-w-md h-[92dvh] sm:h-auto sm:max-h-[85vh] flex flex-col" dir="rtl">
         <DialogHeader>
           <DialogTitle className="text-right">הוספת פריט לרשימה</DialogTitle>
         </DialogHeader>

@@ -144,7 +144,7 @@ async function loadAll() {
     products: (productsRes.data ?? []) as unknown as Product[],
     items: (itemsRes.data ?? []) as unknown as ShoppingItem[],
     lists: (listsRes.data ?? []) as unknown as ShoppingList[],
-    categories: dbCategories.length > 0 ? dbCategories : CATEGORIES,
+    categories: [...new Set([...CATEGORIES, ...dbCategories])],
     loading: false,
   };
   emit();
