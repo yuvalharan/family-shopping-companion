@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Pencil, Trash2, Settings2, Search, X, Plus, ShoppingCart, PackagePlus } from "lucide-react";
+import { Pencil, Trash2, Settings2, Search, X, Plus, ShoppingCart, PackagePlus, CirclePlus } from "lucide-react";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/familycart/AppHeader";
 import { AddProductDialog } from "@/components/familycart/AddProductDialog";
@@ -238,45 +238,146 @@ function QuickAddPopover({
   activeLists: { id: string; name: string }[];
 }) {
   const [open, setOpen] = useState(false);
+  const [selectedListId, setSelectedListId] = useState<string | null>(null);
+  const [qty, setQty] = useState(product.default_quantity);
+  const [creatingList, setCreatingList] = useState(false);
+  const [newListName, setNewListName] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const reset = () => {
+    setSelectedListId(null);
+    setQty(product.default_quantity);
+    setCreatingList(false);
+    setNewListName("");
+  };
+
+  const handleOpenChange = (v: boolean) => {
+    setOpen(v);
+    if (!v) reset();
+  };
+
+  const selectedList = activeLists.find((l) => l.id === selectedListId);
+
+  const confirmAdd = async () => {
+    if (!selectedListId) return;
+    setBusy(true);
+    await actions.addItemToList(selectedListId, product, qty);
+    setBusy(false);
+    toast.success(`${product.name} נוסף ל${selectedList?.name ?? "רשימה"}`);
+    handleOpenChange(false);
+  };
+
+  const confirmCreateList = async () => {
+    const trimmed = newListName.trim();
+    if (!trimmed) return;
+    setBusy(true);
+    const list = await actions.createShoppingList(trimmed);
+    if (list) {
+      await actions.addItemToList(list.id, product, qty);
+      toast.success(`${product.name} נוסף ל${list.name}`);
+      setBusy(false);
+      handleOpenChange(false);
+    } else {
+      setBusy(false);
+    }
+  };
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <button
-          className="size-9 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 flex items-center justify-center transition-colors"
+          className="size-9 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 flex items-center justify-center transition-colors relative"
           aria-label="הוסף לרשימה"
         >
           <ShoppingCart className="size-4" />
+          <CirclePlus className="size-3 absolute -top-0.5 -right-0.5 bg-background rounded-full text-primary" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" dir="rtl" className="w-64 p-2">
-        {activeLists.length === 0 ? (
-          <div className="p-3 text-sm text-muted-foreground text-center space-y-3">
-            <p>אין רשימות פעילות — צור רשימה חדשה</p>
-            <Link
-              to="/shopping"
-              onClick={() => setOpen(false)}
-              className="block text-primary font-medium"
-            >
-              עבור לרשימות
-            </Link>
+      <PopoverContent align="end" dir="rtl" className="w-72 p-3 space-y-3">
+        {selectedListId ? (
+          <div className="space-y-3">
+            <div className="text-sm font-medium">
+              הוסף את {product.name} ל{selectedList?.name}
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-muted-foreground">כמות:</label>
+              <Input
+                type="number"
+                min={1}
+                value={qty}
+                onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
+                className="h-9"
+              />
+              <span className="text-sm text-muted-foreground shrink-0">{product.unit}</span>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={confirmAdd} disabled={busy} className="flex-1">
+                הוסף
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setSelectedListId(null)} disabled={busy}>
+                חזור
+              </Button>
+            </div>
+          </div>
+        ) : creatingList ? (
+          <div className="space-y-3">
+            <div className="text-sm font-medium">רשימה חדשה</div>
+            <Input
+              autoFocus
+              value={newListName}
+              onChange={(e) => setNewListName(e.target.value)}
+              placeholder="שם הרשימה"
+              onKeyDown={(e) => { if (e.key === "Enter") confirmCreateList(); }}
+              className="h-9"
+            />
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-muted-foreground">כמות:</label>
+              <Input
+                type="number"
+                min={1}
+                value={qty}
+                onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
+                className="h-9"
+              />
+              <span className="text-sm text-muted-foreground shrink-0">{product.unit}</span>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={confirmCreateList} disabled={busy || !newListName.trim()} className="flex-1">
+                צור והוסף
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setCreatingList(false)} disabled={busy}>
+                ביטול
+              </Button>
+            </div>
           </div>
         ) : (
-          <div className="space-y-1">
-            <div className="text-xs text-muted-foreground px-2 pb-1">בחר רשימה:</div>
-            {activeLists.map((l) => (
-              <button
-                key={l.id}
-                onClick={async () => {
-                  setOpen(false);
-                  await actions.addItemToList(l.id, product);
-                  toast.success(`${product.name} נוסף ל${l.name}`);
-                }}
-                className="w-full text-right rounded-lg px-3 py-2 hover:bg-muted text-sm font-medium"
-              >
-                {l.name}
-              </button>
-            ))}
-          </div>
+          <>
+            {activeLists.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-2">אין רשימות פעילות</p>
+            ) : (
+              <div className="space-y-1">
+                <div className="text-xs text-muted-foreground px-2 pb-1">בחר רשימה:</div>
+                {activeLists.map((l) => (
+                  <button
+                    key={l.id}
+                    onClick={() => setSelectedListId(l.id)}
+                    className="w-full text-right rounded-lg px-3 py-2 hover:bg-muted text-sm font-medium"
+                  >
+                    {l.name}
+                  </button>
+                ))}
+              </div>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => setCreatingList(true)}
+            >
+              <Plus className="size-4 ms-1" />
+              צור רשימה חדשה
+            </Button>
+          </>
         )}
       </PopoverContent>
     </Popover>
