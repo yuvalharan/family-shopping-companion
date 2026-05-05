@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Check } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { AppHeader } from "@/components/familycart/AppHeader";
 import { AddProductDialog } from "@/components/familycart/AddProductDialog";
 import { type Product } from "@/lib/familycart-data";
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/")({
 });
 
 function MasterListPage() {
-  const { products, items, loading, categories } = useFamilyCart();
+  const { products, loading, categories } = useFamilyCart();
   const [editProduct, setEditProduct] = useState<Product | null>(null);
 
   const grouped = useMemo(() => {
@@ -33,8 +33,6 @@ function MasterListPage() {
       products: map.get(c)!,
     }));
   }, [products, categories]);
-
-  const inCart = (id: string) => items.some((i) => i.product_id === id);
 
   return (
     <div className="min-h-dvh bg-background">
@@ -50,9 +48,7 @@ function MasterListPage() {
           <section key={category}>
             <h2 className="text-lg font-semibold mb-3 text-foreground">{category}</h2>
             <div className="space-y-2.5">
-              {products.map((p) => {
-                const added = inCart(p.id);
-                return (
+              {products.map((p) => (
                   <div
                     key={p.id}
                     className="bg-surface rounded-2xl shadow-soft p-4 flex items-center justify-between gap-3"
@@ -78,32 +74,9 @@ function MasterListPage() {
                       >
                         <Trash2 className="size-4" />
                       </button>
-                      <button
-                        onClick={() => actions.addToShoppingList(p)}
-                        disabled={added}
-                        className={
-                          "h-9 px-3 rounded-xl text-sm font-medium flex items-center gap-1 transition-colors " +
-                          (added
-                            ? "bg-primary/15 text-primary cursor-default"
-                            : "bg-primary text-primary-foreground hover:bg-primary-light")
-                        }
-                      >
-                        {added ? (
-                          <>
-                            <Check className="size-4" />
-                            ברשימה
-                          </>
-                        ) : (
-                          <>
-                            <Plus className="size-4" />
-                            לרשימה
-                          </>
-                        )}
-                      </button>
                     </div>
                   </div>
-                );
-              })}
+              ))}
             </div>
           </section>
         ))}
