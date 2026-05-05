@@ -111,7 +111,6 @@ function ShoppingListDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!confirm("למחוק את הרשימה?")) return;
     await actions.deleteShoppingList(list.id);
     navigate({ to: "/shopping" });
   };
