@@ -228,6 +228,59 @@ function MasterListPage() {
   );
 }
 
+function InlineQuantity({ product }: { product: Product }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(String(product.default_quantity));
+
+  const start = () => {
+    setValue(String(product.default_quantity));
+    setEditing(true);
+  };
+
+  const commit = () => {
+    const n = Math.max(1, Number(value) || 1);
+    setEditing(false);
+    if (n !== product.default_quantity) {
+      actions.updateProduct(product.id, {
+        name: product.name,
+        category: product.category,
+        default_quantity: n,
+        unit: product.unit,
+      });
+    }
+  };
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-1.5 mt-1">
+        <Input
+          autoFocus
+          type="number"
+          min={1}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") commit();
+            if (e.key === "Escape") setEditing(false);
+          }}
+          className="h-7 w-16 px-2 text-sm"
+        />
+        <span className="text-sm text-muted-foreground">{product.unit}</span>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={start}
+      className="text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-md px-1.5 py-0.5 -mr-1.5 transition-colors text-right"
+    >
+      {product.default_quantity} {product.unit}
+    </button>
+  );
+}
+
 function QuickAddPopover({
   product,
   activeLists,
