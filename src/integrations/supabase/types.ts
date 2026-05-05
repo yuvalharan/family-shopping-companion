@@ -48,6 +48,7 @@ export type Database = {
           is_checked: boolean
           product_id: string
           quantity_needed: number
+          shopping_list_id: string
         }
         Insert: {
           created_at?: string
@@ -55,6 +56,7 @@ export type Database = {
           is_checked?: boolean
           product_id: string
           quantity_needed?: number
+          shopping_list_id: string
         }
         Update: {
           created_at?: string
@@ -62,6 +64,7 @@ export type Database = {
           is_checked?: boolean
           product_id?: string
           quantity_needed?: number
+          shopping_list_id?: string
         }
         Relationships: [
           {
@@ -71,7 +74,35 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "shopping_items_shopping_list_id_fkey"
+            columns: ["shopping_list_id"]
+            isOneToOne: false
+            referencedRelation: "shopping_lists"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      shopping_lists: {
+        Row: {
+          created_at: string
+          id: string
+          is_completed: boolean
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          name?: string
+        }
+        Relationships: []
       }
     }
     Views: {
