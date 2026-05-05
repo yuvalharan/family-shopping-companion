@@ -23,10 +23,10 @@ function MasterListPage() {
   const { products, loading, categories } = useFamilyCart();
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [manageOpen, setManageOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState<Set<string> | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const toggle = (cat: string) => {
-    setCollapsed((prev) => {
+    setExpanded((prev) => {
       const next = new Set(prev);
       if (next.has(cat)) next.delete(cat); else next.add(cat);
       return next;
