@@ -149,7 +149,7 @@ function ShoppingListDetailPage() {
             </button>
           )}
           <button
-            onClick={handleDelete}
+            onClick={() => setConfirmDelete(true)}
             className="size-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10"
             aria-label="מחק"
           >
