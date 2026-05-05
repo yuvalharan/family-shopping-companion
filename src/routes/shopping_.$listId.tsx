@@ -257,8 +257,8 @@ function ItemRow({
   return (
     <div
       className={
-        "bg-surface rounded-2xl shadow-soft p-4 flex items-center justify-between gap-3 transition-opacity " +
-        (checked ? "opacity-60" : "")
+        "rounded-2xl shadow-soft p-4 flex items-center justify-between gap-3 transition-colors " +
+        (checked ? "bg-green-100 dark:bg-green-900/30 opacity-70" : "bg-surface")
       }
     >
       <label className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer">
@@ -343,7 +343,7 @@ function AddItemDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md h-[92dvh] sm:h-auto sm:max-h-[85vh] flex flex-col" dir="rtl">
+      <DialogContent className="max-w-md h-[92dvh] sm:h-auto sm:max-h-[85vh] flex flex-col [&>button]:hidden" dir="rtl">
         <DialogHeader>
           <DialogTitle className="text-right">הוספת פריט לרשימה</DialogTitle>
         </DialogHeader>
@@ -416,6 +416,9 @@ function AddItemDialog({
             ))}
           </div>
         </div>
+        <Button className="w-full mt-2" onClick={() => onOpenChange(false)}>
+          סיום
+        </Button>
       </DialogContent>
     </Dialog>
   );
