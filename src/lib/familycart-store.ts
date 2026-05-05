@@ -201,14 +201,74 @@ export const actions = {
     toast.success("המוצר עודכן");
   },
 
-  async addCategory(name: string) {
+  async addCategory(name: string): Promise<{ ok: true; name: string } | { ok: false; error: string }> {
     const trimmed = name.trim();
-    if (!trimmed || state.categories.includes(trimmed)) return trimmed;
+    if (!trimmed) return { ok: false, error: "שם הקטגוריה חסר" };
+    const lower = trimmed.toLowerCase();
+    const existing = state.categories.find((c) => c.toLowerCase() === lower);
+    if (existing) return { ok: false, error: "קטגוריה זו כבר קיימת" };
     state = { ...state, categories: [...state.categories, trimmed] };
     emit();
     const { error } = await supabase.from("categories").insert({ name: trimmed });
-    if (error) toast.error("שגיאה בשמירה, אנא נסה שוב");
-    return trimmed;
+    if (error) {
+      toast.error("שגיאה בשמירה, אנא נסה שוב");
+      return { ok: false, error: "שגיאה בשמירה" };
+    }
+    return { ok: true, name: trimmed };
+  },
+
+  async renameCategory(oldName: string, newName: string): Promise<{ ok: true } | { ok: false; error: string }> {
+    const trimmed = newName.trim();
+    if (!trimmed) return { ok: false, error: "שם הקטגוריה חסר" };
+    if (trimmed === oldName) return { ok: true };
+    const lower = trimmed.toLowerCase();
+    if (state.categories.some((c) => c.toLowerCase() === lower && c !== oldName)) {
+      return { ok: false, error: "קטגוריה זו כבר קיימת" };
+    }
+    // Update products in DB
+    const { error: prodErr } = await supabase
+      .from("products")
+      .update({ category: trimmed })
+      .eq("category", oldName);
+    if (prodErr) {
+      toast.error("שגיאה בשמירה");
+      return { ok: false, error: "שגיאה בשמירה" };
+    }
+    // Insert new category, delete old (if it was in categories table)
+    await supabase.from("categories").insert({ name: trimmed });
+    await supabase.from("categories").delete().eq("name", oldName);
+    state = {
+      ...state,
+      categories: state.categories.map((c) => (c === oldName ? trimmed : c)),
+      products: state.products.map((p) => (p.category === oldName ? { ...p, category: trimmed } : p)),
+    };
+    emit();
+    toast.success("הקטגוריה עודכנה");
+    return { ok: true };
+  },
+
+  async deleteCategory(name: string) {
+    if (name === "אחר") {
+      toast.error('לא ניתן למחוק את הקטגוריה "אחר"');
+      return;
+    }
+    // Move products to "אחר"
+    const { error: prodErr } = await supabase
+      .from("products")
+      .update({ category: "אחר" })
+      .eq("category", name);
+    if (prodErr) {
+      toast.error("שגיאה במחיקה");
+      return;
+    }
+    await supabase.from("categories").delete().eq("name", name);
+    state = {
+      ...state,
+      categories: state.categories.filter((c) => c !== name),
+      products: state.products.map((p) => (p.category === name ? { ...p, category: "אחר" } : p)),
+    };
+    emit();
+    toast.success("הקטגוריה נמחקה");
   },
 
   async removeProduct(id: string) {
