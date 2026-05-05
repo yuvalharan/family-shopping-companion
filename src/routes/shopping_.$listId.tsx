@@ -20,6 +20,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -58,6 +67,7 @@ function ShoppingListDetailPage() {
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [addOpen, setAddOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   if (loading) {
     return (
@@ -101,7 +111,6 @@ function ShoppingListDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!confirm("למחוק את הרשימה?")) return;
     await actions.deleteShoppingList(list.id);
     navigate({ to: "/shopping" });
   };
@@ -140,7 +149,7 @@ function ShoppingListDetailPage() {
             </button>
           )}
           <button
-            onClick={handleDelete}
+            onClick={() => setConfirmDelete(true)}
             className="size-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10"
             aria-label="מחק"
           >
@@ -206,9 +215,13 @@ function ShoppingListDetailPage() {
         )}
 
         {listItems.length === 0 && (
-          <p className="text-center text-muted-foreground py-12">
-            הרשימה ריקה. הוסיפו פריטים כדי להתחיל.
-          </p>
+          <div className="text-center py-12">
+            <p className="text-muted-foreground mb-4">הרשימה ריקה — הוסף פריטים מהמחסן</p>
+            <Button onClick={() => setAddOpen(true)} className="rounded-2xl">
+              <Plus className="size-5 ms-1" />
+              הוסף פריטים
+            </Button>
+          </div>
         )}
       </main>
 
@@ -233,6 +246,25 @@ function ShoppingListDetailPage() {
         categories={categories}
         existingProductIds={new Set(listItems.map((i) => i.product_id))}
       />
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-right">
+              האם למחוק את הרשימה {list.name}?
+            </AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-start gap-2">
+            <AlertDialogAction
+              onClick={() => { setConfirmDelete(false); handleDelete(); }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              מחק
+            </AlertDialogAction>
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

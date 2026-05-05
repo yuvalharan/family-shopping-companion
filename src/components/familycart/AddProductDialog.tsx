@@ -180,7 +180,7 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange }
     </DialogContent>
   );
 
-  if (isEdit) {
+  if (isEdit || controlledOpen !== undefined) {
     return (
       <Dialog open={open} onOpenChange={handleOpenChange}>
         {content}

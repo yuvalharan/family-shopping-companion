@@ -1,11 +1,24 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Pencil, Trash2, Settings2, Search, X } from "lucide-react";
+import { Pencil, Trash2, Settings2, Search, X, Plus, ShoppingCart, PackagePlus } from "lucide-react";
+import { toast } from "sonner";
 import { AppHeader } from "@/components/familycart/AppHeader";
 import { AddProductDialog } from "@/components/familycart/AddProductDialog";
 import { ManageCategoriesDialog } from "@/components/familycart/ManageCategoriesDialog";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { type Product } from "@/lib/familycart-data";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
 
@@ -22,12 +35,16 @@ export const Route = createFileRoute("/")({
 });
 
 function MasterListPage() {
-  const { products, loading, categories } = useFamilyCart();
+  const { products, loading, categories, lists } = useFamilyCart();
   const [editProduct, setEditProduct] = useState<Product | null>(null);
+  const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
   const [manageOpen, setManageOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
   const [activeCat, setActiveCat] = useState<string>("__all__");
+
+  const activeLists = useMemo(() => lists.filter((l) => !l.is_completed), [lists]);
 
   const toggle = (cat: string) => {
     setExpanded((prev) => {
@@ -53,59 +70,75 @@ function MasterListPage() {
   }, [products, categories, search, activeCat]);
 
   const isFiltering = search.trim().length > 0 || activeCat !== "__all__";
+  const isEmpty = !loading && products.length === 0;
 
   return (
     <div className="min-h-dvh bg-background">
       <AppHeader />
       <main className="mx-auto max-w-xl px-4 py-6 pb-32 space-y-5">
-        <div className="flex justify-end">
-          <button
-            onClick={() => setManageOpen(true)}
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Settings2 className="size-4" />
-            נהל קטגוריות
-          </button>
-        </div>
+        {!isEmpty && !loading && (
+          <>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setManageOpen(true)}
+                className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Settings2 className="size-4" />
+                נהל קטגוריות
+              </button>
+            </div>
 
-        <div className="relative mx-auto w-3/5">
-          <Search className="size-4 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="חיפוש מוצר..."
-            className="pr-9 pl-9 h-11 rounded-xl"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch("")}
-              aria-label="נקה חיפוש"
-              className="absolute left-2 top-1/2 -translate-y-1/2 size-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted"
-            >
-              <X className="size-4" />
-            </button>
-          )}
-        </div>
+            <div className="relative mx-auto w-3/5">
+              <Search className="size-4 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="חיפוש מוצר..."
+                className="pr-9 pl-9 h-11 rounded-xl"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  aria-label="נקה חיפוש"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 size-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted"
+                >
+                  <X className="size-4" />
+                </button>
+              )}
+            </div>
 
-        <Select value={activeCat} onValueChange={setActiveCat}>
-          <SelectTrigger className="h-11 rounded-xl">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all__">כל הקטגוריות</SelectItem>
-            {categories.map((c) => (
-              <SelectItem key={c} value={c}>{c}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+            <Select value={activeCat} onValueChange={setActiveCat}>
+              <SelectTrigger className="h-11 rounded-xl">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">כל הקטגוריות</SelectItem>
+                {categories.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </>
+        )}
 
         {loading && (
           <p className="text-center text-muted-foreground mt-12">טוען מוצרים...</p>
         )}
-        {!loading && grouped.length === 0 && (
-          <p className="text-center text-muted-foreground mt-12">
-            {isFiltering || products.length > 0 ? "לא נמצאו מוצרים" : "אין עדיין מוצרים. הוסיפו את הראשון!"}
-          </p>
+        {isEmpty && (
+          <div className="text-center py-16">
+            <div className="mx-auto size-20 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
+              <PackagePlus className="size-9" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">המחסן ריק</h2>
+            <p className="text-muted-foreground mb-6">הוסף את המוצרים הקבועים שלך</p>
+            <Button onClick={() => setAddOpen(true)} size="lg" className="rounded-2xl">
+              <Plus className="size-5 ms-1" />
+              הוסף מוצר ראשון
+            </Button>
+          </div>
+        )}
+        {!loading && !isEmpty && grouped.length === 0 && (
+          <p className="text-center text-muted-foreground mt-12">לא נמצאו מוצרים</p>
         )}
         {grouped.map(({ category, products }) => {
           const isOpen = isFiltering || expanded.has(category);
@@ -132,6 +165,7 @@ function MasterListPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
+                        <QuickAddPopover product={p} activeLists={activeLists} />
                         <button
                           onClick={() => setEditProduct(p)}
                           className="size-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted flex items-center justify-center transition-colors"
@@ -140,7 +174,7 @@ function MasterListPage() {
                           <Pencil className="size-4" />
                         </button>
                         <button
-                          onClick={() => actions.removeProduct(p.id)}
+                          onClick={() => setDeleteProduct(p)}
                           className="size-9 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex items-center justify-center transition-colors"
                           aria-label="מחק מוצר"
                         >
@@ -155,7 +189,11 @@ function MasterListPage() {
           );
         })}
       </main>
-      <AddProductDialog />
+      {isEmpty ? (
+        <AddProductDialog open={addOpen} onOpenChange={setAddOpen} />
+      ) : (
+        <AddProductDialog />
+      )}
       {editProduct && (
         <AddProductDialog
           product={editProduct}
@@ -164,6 +202,83 @@ function MasterListPage() {
         />
       )}
       <ManageCategoriesDialog open={manageOpen} onOpenChange={setManageOpen} />
+      <AlertDialog open={!!deleteProduct} onOpenChange={(v) => { if (!v) setDeleteProduct(null); }}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-right">
+              האם למחוק את {deleteProduct?.name}?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-right">
+              לא ניתן לבטל פעולה זו.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-start gap-2">
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteProduct) actions.removeProduct(deleteProduct.id);
+                setDeleteProduct(null);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              מחק
+            </AlertDialogAction>
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
+  );
+}
+
+function QuickAddPopover({
+  product,
+  activeLists,
+}: {
+  product: Product;
+  activeLists: { id: string; name: string }[];
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          className="size-9 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 flex items-center justify-center transition-colors"
+          aria-label="הוסף לרשימה"
+        >
+          <ShoppingCart className="size-4" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" dir="rtl" className="w-64 p-2">
+        {activeLists.length === 0 ? (
+          <div className="p-3 text-sm text-muted-foreground text-center space-y-3">
+            <p>אין רשימות פעילות — צור רשימה חדשה</p>
+            <Link
+              to="/shopping"
+              onClick={() => setOpen(false)}
+              className="block text-primary font-medium"
+            >
+              עבור לרשימות
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-1">
+            <div className="text-xs text-muted-foreground px-2 pb-1">בחר רשימה:</div>
+            {activeLists.map((l) => (
+              <button
+                key={l.id}
+                onClick={async () => {
+                  setOpen(false);
+                  await actions.addItemToList(l.id, product);
+                  toast.success(`${product.name} נוסף ל${l.name}`);
+                }}
+                className="w-full text-right rounded-lg px-3 py-2 hover:bg-muted text-sm font-medium"
+              >
+                {l.name}
+              </button>
+            ))}
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
   );
 }

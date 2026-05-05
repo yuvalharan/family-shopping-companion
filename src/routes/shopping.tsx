@@ -12,7 +12,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
+import type { ShoppingList } from "@/lib/familycart-data";
 
 export const Route = createFileRoute("/shopping")({
   head: () => ({
@@ -33,6 +43,7 @@ function ShoppingListsPage() {
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
   const [expandedHistory, setExpandedHistory] = useState<Set<string>>(new Set());
+  const [confirmDelete, setConfirmDelete] = useState<{ list: ShoppingList; isHistory: boolean } | null>(null);
 
   const active = useMemo(() => lists.filter((l) => !l.is_completed), [lists]);
   const history = useMemo(
@@ -94,38 +105,51 @@ function ShoppingListsPage() {
           <p className="text-center text-muted-foreground mt-12">טוען רשימות...</p>
         ) : (
           <>
-            {active.length === 0 && history.length === 0 ? (
-              <div className="text-center py-20">
+            {active.length === 0 ? (
+              <div className="text-center py-16">
                 <div className="mx-auto size-20 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
                   <ShoppingCart className="size-9" />
                 </div>
-                <h2 className="text-xl font-semibold mb-2">אין עדיין רשימות קנייה</h2>
-                <p className="text-muted-foreground">צרו רשימה ראשונה כדי להתחיל.</p>
+                <h2 className="text-xl font-semibold mb-2">אין רשימות פעילות</h2>
+                <p className="text-muted-foreground mb-6">צור רשימה חדשה</p>
+                <Button onClick={() => setOpen(true)} size="lg" className="rounded-2xl">
+                  <Plus className="size-5 ms-1" />
+                  צור רשימה
+                </Button>
               </div>
             ) : (
               <section className="space-y-3">
-                {active.length > 0 && (
-                  <h2 className="text-lg font-semibold">רשימות פעילות</h2>
-                )}
+                <h2 className="text-lg font-semibold">רשימות פעילות</h2>
                 {active.map((list) => {
                   const s = stats(list.id);
                   return (
-                    <Link
+                    <div
                       key={list.id}
-                      to="/shopping/$listId"
-                      params={{ listId: list.id }}
-                      className="block bg-surface rounded-2xl shadow-soft p-4 hover:shadow-lift transition-shadow"
+                      className="bg-surface rounded-2xl shadow-soft hover:shadow-lift transition-shadow flex items-center gap-2 pe-2"
                     >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="font-semibold text-base truncate">{list.name}</div>
-                          <div className="text-sm text-muted-foreground mt-0.5">
-                            {s.total} פריטים · {s.checked} בעגלה
+                      <Link
+                        to="/shopping/$listId"
+                        params={{ listId: list.id }}
+                        className="flex-1 p-4 min-w-0"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="font-semibold text-base truncate">{list.name}</div>
+                            <div className="text-sm text-muted-foreground mt-0.5">
+                              {s.total} פריטים · {s.checked} בעגלה
+                            </div>
                           </div>
+                          <div className="text-primary text-sm font-medium shrink-0">פתח</div>
                         </div>
-                        <div className="text-primary text-sm font-medium shrink-0">פתח</div>
-                      </div>
-                    </Link>
+                      </Link>
+                      <button
+                        onClick={() => setConfirmDelete({ list, isHistory: false })}
+                        aria-label="מחק רשימה"
+                        className="size-9 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex items-center justify-center transition-colors shrink-0"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </div>
                   );
                 })}
               </section>
@@ -159,8 +183,8 @@ function ShoppingListsPage() {
                           />
                         </button>
                         <button
-                          onClick={() => actions.deleteShoppingList(list.id)}
-                          aria-label="מחק רשימה"
+                          onClick={() => setConfirmDelete({ list, isHistory: true })}
+                          aria-label="מחק מהיסטוריה"
                           className="size-9 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex items-center justify-center transition-colors"
                         >
                           <Trash2 className="size-4" />
@@ -227,6 +251,30 @@ function ShoppingListsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!confirmDelete} onOpenChange={(v) => { if (!v) setConfirmDelete(null); }}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-right">
+              {confirmDelete?.isHistory
+                ? "האם למחוק מהיסטוריה?"
+                : `האם למחוק את הרשימה ${confirmDelete?.list.name}?`}
+            </AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-start gap-2">
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmDelete) actions.deleteShoppingList(confirmDelete.list.id);
+                setConfirmDelete(null);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              מחק
+            </AlertDialogAction>
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
