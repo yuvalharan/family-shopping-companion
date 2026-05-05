@@ -215,9 +215,13 @@ function ShoppingListDetailPage() {
         )}
 
         {listItems.length === 0 && (
-          <p className="text-center text-muted-foreground py-12">
-            הרשימה ריקה. הוסיפו פריטים כדי להתחיל.
-          </p>
+          <div className="text-center py-12">
+            <p className="text-muted-foreground mb-4">הרשימה ריקה — הוסף פריטים מהמחסן</p>
+            <Button onClick={() => setAddOpen(true)} className="rounded-2xl">
+              <Plus className="size-5 ms-1" />
+              הוסף פריטים
+            </Button>
+          </div>
         )}
       </main>
 
