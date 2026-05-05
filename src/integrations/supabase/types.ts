@@ -103,18 +103,21 @@ export type Database = {
       }
       shopping_lists: {
         Row: {
+          completed_at: string | null
           created_at: string
           id: string
           is_completed: boolean
           name: string
         }
         Insert: {
+          completed_at?: string | null
           created_at?: string
           id?: string
           is_completed?: boolean
           name: string
         }
         Update: {
+          completed_at?: string | null
           created_at?: string
           id?: string
           is_completed?: boolean
