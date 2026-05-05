@@ -29,8 +29,16 @@ export type Product = {
   created_at?: string;
 };
 
+export type ShoppingList = {
+  id: string;
+  name: string;
+  is_completed: boolean;
+  created_at?: string;
+};
+
 export type ShoppingItem = {
   id: string;
+  shopping_list_id: string;
   product_id: string;
   quantity_needed: number;
   is_checked: boolean;
