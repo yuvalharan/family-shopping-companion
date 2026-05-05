@@ -272,12 +272,16 @@ function InlineQuantity({ product }: { product: Product }) {
   }
 
   return (
-    <button
-      onClick={start}
-      className="text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-md px-1.5 py-0.5 -mr-1.5 transition-colors text-right"
-    >
-      {product.default_quantity} {product.unit}
-    </button>
+    <div className="flex items-center gap-1.5 mt-1">
+      <button
+        onClick={start}
+        aria-label="ערוך כמות"
+        className="inline-flex items-center justify-center min-w-9 h-7 px-2 text-sm rounded-md border border-input bg-muted text-foreground hover:border-ring hover:bg-muted/70 transition-colors"
+      >
+        {product.default_quantity}
+      </button>
+      <span className="text-sm text-muted-foreground">{product.unit}</span>
+    </div>
   );
 }
 
