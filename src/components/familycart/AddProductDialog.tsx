@@ -236,7 +236,34 @@ function NameSuggestions({ query, onPick }: { query: string; onPick: (p: { name:
     return BASE_PRODUCTS.filter((p) => p.name.includes(q) && !existingNames.has(p.name) && p.name !== q).slice(0, 6);
   }, [q, existingNames]);
 
-  if (matches.length === 0) return null;
+  const [aiSuggestion, setAiSuggestion] = useState<{ name: string; category: string; default_quantity: number; unit: Unit } | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const aiQueryRef = useRef<string>("");
+
+  useEffect(() => {
+    if (!q || q.length < 2 || matches.length > 0) {
+      setAiSuggestion(null);
+      setAiLoading(false);
+      return;
+    }
+    let cancelled = false;
+    aiQueryRef.current = q;
+    setAiLoading(true);
+    setAiSuggestion(null);
+    (async () => {
+      try {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { data, error } = await supabase.functions.invoke("ai-product-search", { body: { query: q } });
+        if (cancelled || aiQueryRef.current !== q) return;
+        if (!error && data && data.name) setAiSuggestion(data);
+      } finally {
+        if (!cancelled && aiQueryRef.current === q) setAiLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [q, matches.length]);
+
+  if (matches.length === 0 && !aiSuggestion && !aiLoading) return null;
 
   return (
     <div className="rounded-md border bg-popover shadow-sm overflow-hidden">
@@ -251,6 +278,21 @@ function NameSuggestions({ query, onPick }: { query: string; onPick: (p: { name:
           <span className="font-medium">{p.name}</span>
         </button>
       ))}
+      {matches.length === 0 && aiLoading && (
+        <div className="px-3 py-2 text-xs text-muted-foreground text-right">מחפש הצעה...</div>
+      )}
+      {matches.length === 0 && aiSuggestion && (
+        <button
+          type="button"
+          onClick={() => onPick(aiSuggestion)}
+          className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm hover:bg-accent text-right"
+        >
+          <span className="text-xs text-muted-foreground">
+            {aiSuggestion.default_quantity} {aiSuggestion.unit} · {aiSuggestion.category} · הצעת AI
+          </span>
+          <span className="font-medium">{aiSuggestion.name}</span>
+        </button>
+      )}
     </div>
   );
 }
