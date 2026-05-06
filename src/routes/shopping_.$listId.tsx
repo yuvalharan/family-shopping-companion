@@ -108,9 +108,21 @@ function ShoppingListDetailPage() {
   };
 
   const handleFinish = () => {
-    void actions.completeShoppingList(list.id);
+    const id = list.id;
+    void actions.completeShoppingList(id);
+    toast.success("קנייה הושלמה! כל הכבוד 🛒", {
+      duration: 5000,
+      action: {
+        label: "בטל",
+        onClick: () => {
+          void actions.reactivateShoppingList(id);
+          navigate({ to: "/shopping/$listId", params: { listId: id } });
+        },
+      },
+    });
     navigate({ to: "/shopping" });
   };
+
 
   const handleDelete = async () => {
     await actions.deleteShoppingList(list.id);
