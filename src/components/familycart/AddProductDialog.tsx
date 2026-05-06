@@ -226,3 +226,31 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
     </Dialog>
   );
 }
+
+function NameSuggestions({ query, onPick }: { query: string; onPick: (p: { name: string; category: string; default_quantity: number; unit: Unit }) => void }) {
+  const { products } = useFamilyCart();
+  const existingNames = useMemo(() => new Set(products.map((p) => p.name)), [products]);
+  const q = query.trim();
+  const matches = useMemo(() => {
+    if (!q) return [];
+    return BASE_PRODUCTS.filter((p) => p.name.includes(q) && !existingNames.has(p.name) && p.name !== q).slice(0, 6);
+  }, [q, existingNames]);
+
+  if (matches.length === 0) return null;
+
+  return (
+    <div className="rounded-md border bg-popover shadow-sm overflow-hidden">
+      {matches.map((p) => (
+        <button
+          key={p.name}
+          type="button"
+          onClick={() => onPick(p)}
+          className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm hover:bg-accent text-right"
+        >
+          <span className="text-xs text-muted-foreground">{p.default_quantity} {p.unit} · {p.category}</span>
+          <span className="font-medium">{p.name}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
