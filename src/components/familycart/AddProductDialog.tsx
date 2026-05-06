@@ -217,3 +217,108 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange }
     </Dialog>
   );
 }
+
+function ProductNameField({
+  value,
+  onChange,
+  onPick,
+  disabled,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onPick: (bp: BaseProduct) => void;
+  disabled?: boolean;
+}) {
+  const [focused, setFocused] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const trimmed = value.trim();
+
+  const matches = useMemo(() => {
+    if (!trimmed) return [];
+    const q = trimmed.toLowerCase();
+    return BASE_PRODUCTS.filter((p) => p.name.toLowerCase().includes(q)).slice(0, 6);
+  }, [trimmed]);
+
+  const askAi = async () => {
+    if (!trimmed) return;
+    setAiLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-product-search", {
+        body: { query: trimmed },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+      if (data?.name && data?.category && data?.unit) {
+        onPick(data as BaseProduct);
+        toast.success("נמצאה הצעה מ-AI");
+      } else {
+        toast.error("לא נמצאה הצעה מתאימה");
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("שגיאה בחיפוש AI");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  return (
+    <div className="relative">
+      <Input
+        id="prod-name"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setTimeout(() => setFocused(false), 150)}
+        placeholder="לדוגמה: לחם פרוס"
+        disabled={disabled}
+        autoComplete="off"
+      />
+      {!disabled && focused && trimmed.length > 0 && (
+        <div className="absolute z-50 top-full mt-1 w-full bg-popover border border-border rounded-lg shadow-lg overflow-hidden">
+          {matches.length > 0 ? (
+            <ul className="max-h-56 overflow-y-auto">
+              {matches.map((p) => (
+                <li key={`${p.name}-${p.category}`}>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => onPick(p)}
+                    className="w-full text-right px-3 py-2 hover:bg-muted flex items-center justify-between gap-2"
+                  >
+                    <span className="text-xs text-muted-foreground">
+                      {p.category} · {p.default_quantity} {p.unit}
+                    </span>
+                    <span className="text-sm font-medium">{p.name}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="p-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={askAi}
+                disabled={aiLoading}
+                className="w-full"
+              >
+                {aiLoading ? (
+                  <Loader2 className="size-4 ms-1 animate-spin" />
+                ) : (
+                  <Sparkles className="size-4 ms-1" />
+                )}
+                חפש עם AI
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
