@@ -46,7 +46,7 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange }
       setUnit(product.unit);
     } else {
       setName("");
-      setCategory("אחר");
+      setCategory(categories[0] ?? "");
       setQty(1);
       setUnit("יחידות");
     }
