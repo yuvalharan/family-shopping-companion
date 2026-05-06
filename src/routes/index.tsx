@@ -98,8 +98,66 @@ function MasterListPage() {
     }));
   }, [products, categories, search, activeCat]);
 
+  const totalMatches = useMemo(
+    () => grouped.reduce((sum, g) => sum + g.products.length, 0),
+    [grouped],
+  );
+
+  const trimmedSearch = search.trim();
+
+  useEffect(() => {
+    if (!searchFocused) return;
+    if (trimmedSearch.length < 2) {
+      setAiSuggestion(null);
+      return;
+    }
+    if (totalMatches > 0) {
+      setAiSuggestion(null);
+      return;
+    }
+    if (aiSuggestion && aiQuery === trimmedSearch) return;
+
+    let cancelled = false;
+    setAiLoading(true);
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("ai-product-search", {
+          body: { query: trimmedSearch },
+        });
+        if (cancelled) return;
+        if (error) throw error;
+        if (data?.error) {
+          if (data.error.includes("קרדיטים") || data.error.includes("בקשות")) {
+            toast.error(data.error);
+          }
+          return;
+        }
+        if (data?.name && data?.category && data?.unit) {
+          setAiSuggestion(data as AiSuggestion);
+          setAiQuery(trimmedSearch);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        if (!cancelled) setAiLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [trimmedSearch, totalMatches, searchFocused]);
+
   const isFiltering = search.trim().length > 0 || activeCat !== "__all__";
   const isEmpty = !loading && products.length === 0;
+
+  const showSearchDropdown = searchFocused && trimmedSearch.length > 0 && totalMatches === 0 &&
+    (aiLoading || aiSuggestion);
+
+  const openAddWithPrefill = (s: AiSuggestion) => {
+    setAiPrefill(s);
+    setAddOpen(true);
+    setAiSuggestion(null);
+    setSearch("");
+  };
+
 
   return (
     <div className="min-h-dvh bg-background">
