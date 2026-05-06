@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus } from "lucide-react";
 import { UNITS, type Unit, type Product } from "@/lib/familycart-data";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
+import { BASE_PRODUCTS } from "@/lib/base-products";
 
 
 const ADD_NEW_SENTINEL = "__add_new__";
@@ -118,6 +119,12 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
             disabled={isEdit}
             autoComplete="off"
           />
+          {!isEdit && <NameSuggestions query={name} onPick={(p) => {
+            setName(p.name);
+            setCategory(p.category);
+            setQty(p.default_quantity);
+            setUnit(p.unit);
+          }} />}
         </div>
         <div className="space-y-2">
           <Label>קטגוריה</Label>
@@ -217,5 +224,33 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
       </DialogTrigger>
       {content}
     </Dialog>
+  );
+}
+
+function NameSuggestions({ query, onPick }: { query: string; onPick: (p: { name: string; category: string; default_quantity: number; unit: Unit }) => void }) {
+  const { products } = useFamilyCart();
+  const existingNames = useMemo(() => new Set(products.map((p) => p.name)), [products]);
+  const q = query.trim();
+  const matches = useMemo(() => {
+    if (!q) return [];
+    return BASE_PRODUCTS.filter((p) => p.name.includes(q) && !existingNames.has(p.name) && p.name !== q).slice(0, 6);
+  }, [q, existingNames]);
+
+  if (matches.length === 0) return null;
+
+  return (
+    <div className="rounded-md border bg-popover shadow-sm overflow-hidden">
+      {matches.map((p) => (
+        <button
+          key={p.name}
+          type="button"
+          onClick={() => onPick(p)}
+          className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm hover:bg-accent text-right"
+        >
+          <span className="text-xs text-muted-foreground">{p.default_quantity} {p.unit} · {p.category}</span>
+          <span className="font-medium">{p.name}</span>
+        </button>
+      ))}
+    </div>
   );
 }
