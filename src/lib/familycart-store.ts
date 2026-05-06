@@ -380,7 +380,6 @@ export const actions = {
       .update({ is_completed: true, completed_at: completedAt })
       .eq("id", id);
     if (error) toast.error("שגיאה בסיום הרשימה");
-    else toast.success("קנייה הושלמה! כל הכבוד 🛒");
   },
 
   async addItemToList(listId: string, product: Product, quantity?: number) {
