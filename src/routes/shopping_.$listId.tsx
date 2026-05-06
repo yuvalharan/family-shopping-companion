@@ -373,48 +373,24 @@ function ItemRow({
             </div>
           )}
 
-          {editingNotes ? (
-            <Input
-              autoFocus
-              value={notesDraft}
-              onChange={(e) => setNotesDraft(e.target.value)}
-              onBlur={commitNotes}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") commitNotes();
-                if (e.key === "Escape") setEditingNotes(false);
-              }}
-              placeholder="הערה (לדוגמה: תנובה 3% בלבד)"
-              className="h-7 text-xs"
-            />
-          ) : notes ? (
-            <button
-              onClick={startNotes}
-              className="text-xs text-muted-foreground italic hover:text-foreground text-right block w-full truncate"
-            >
-              {notes}
-            </button>
-          ) : null}
+          <input
+            type="text"
+            value={notesDraft}
+            onChange={(e) => setNotesDraft(e.target.value)}
+            onBlur={commitNotes}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+              if (e.key === "Escape") {
+                setNotesDraft(notes ?? "");
+                (e.target as HTMLInputElement).blur();
+              }
+            }}
+            placeholder="הוסף הערה..."
+            className="w-full bg-transparent border-0 outline-none text-xs text-foreground placeholder:text-muted-foreground/70 placeholder:italic p-0 text-right"
+          />
         </div>
       </div>
       <div className="flex items-center gap-0.5 shrink-0">
-        {!editingNotes && !notes && (
-          <button
-            onClick={startNotes}
-            className="size-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted flex items-center justify-center"
-            aria-label="הוסף הערה"
-          >
-            <StickyNote className="size-3.5" />
-          </button>
-        )}
-        {!editingNotes && notes && (
-          <button
-            onClick={startNotes}
-            className="size-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted flex items-center justify-center"
-            aria-label="ערוך הערה"
-          >
-            <Pencil className="size-3.5" />
-          </button>
-        )}
         <button
           onClick={() => actions.removeItem(itemId)}
           className="size-8 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex items-center justify-center"
