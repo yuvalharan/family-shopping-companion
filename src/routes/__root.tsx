@@ -1,5 +1,7 @@
-import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { Outlet, Link, createRootRoute, HeadContent, Scripts, useNavigate, useLocation } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider, useAuth } from "@/lib/auth";
 
 import appCss from "../styles.css?url";
 
@@ -71,11 +73,27 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+function AuthGate() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const isPublic = pathname === "/login" || pathname === "/signup";
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user && !isPublic) navigate({ to: "/login" });
+  }, [user, loading, isPublic, navigate]);
+
+  if (loading) return <div className="min-h-screen" />;
+  if (!user && !isPublic) return <div className="min-h-screen" />;
+  return <Outlet />;
+}
+
 function RootComponent() {
   return (
-    <>
-      <Outlet />
+    <AuthProvider>
+      <AuthGate />
       <Toaster position="bottom-center" richColors />
-    </>
+    </AuthProvider>
   );
 }

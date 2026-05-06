@@ -1,12 +1,20 @@
-import { Link, useLocation } from "@tanstack/react-router";
-import { ShoppingBasket } from "lucide-react";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { ShoppingBasket, LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 
 export function AppHeader() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const tabs = [
     { to: "/", label: "רשימה ראשית" },
     { to: "/shopping", label: "רשימות קנייה" },
   ] as const;
+
+  const onLogout = async () => {
+    await supabase.auth.signOut();
+    navigate({ to: "/login" });
+  };
 
   return (
     <header className="sticky top-0 z-20 bg-background/85 backdrop-blur border-b border-border">
@@ -15,6 +23,10 @@ export function AppHeader() {
           <ShoppingBasket className="size-6" />
           <span className="text-xl font-semibold">FamilyCart</span>
         </div>
+        <Button variant="ghost" size="sm" onClick={onLogout} aria-label="התנתק">
+          <LogOut className="size-4 ml-1" />
+          התנתק
+        </Button>
       </div>
       <nav className="mx-auto max-w-xl px-4 flex gap-2">
         {tabs.map((t) => {
