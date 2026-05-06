@@ -327,15 +327,15 @@ function ProductNameField({
                   onClick={() => { onPick(aiSuggestion); setAiSuggestion(null); }}
                   className="w-full text-right px-3 py-2 hover:bg-muted flex items-center justify-between gap-2"
                 >
-                  <span className="text-xs text-muted-foreground">
-                    {aiSuggestion.category} · {aiSuggestion.default_quantity} {aiSuggestion.unit}
-                  </span>
                   <span className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{aiSuggestion.name}</span>
                     <span className="inline-flex items-center gap-1 text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded">
                       <Sparkles className="size-3" />
                       הצעת AI
                     </span>
-                    <span className="text-sm font-medium">{aiSuggestion.name}</span>
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {aiSuggestion.category} · {aiSuggestion.default_quantity} {aiSuggestion.unit}
                   </span>
                 </button>
               </li>
