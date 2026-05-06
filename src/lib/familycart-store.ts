@@ -129,8 +129,14 @@ function subscribe(cb: () => void) {
 }
 const getSnapshot = () => state;
 
+async function getUserId(): Promise<string | null> {
+  const { data } = await supabase.auth.getUser();
+  return data.user?.id ?? null;
+}
+
 let loaded = false;
 let loadingPromise: Promise<void> | null = null;
+let currentUserId: string | null = null;
 
 async function loadAll() {
   const [productsRes, itemsRes, listsRes, categoriesRes] = await Promise.all([
@@ -162,13 +168,27 @@ function ensureLoaded() {
   return loadingPromise;
 }
 
+supabase.auth.onAuthStateChange((_e, session) => {
+  const newUserId = session?.user?.id ?? null;
+  if (newUserId !== currentUserId) {
+    currentUserId = newUserId;
+    loaded = false;
+    loadingPromise = null;
+    state = { products: [], items: [], lists: [], categories: [...CATEGORIES], loading: !!newUserId };
+    emit();
+    if (newUserId) ensureLoaded();
+  }
+});
+
 export function useFamilyCart() {
   const [snapshot, setSnapshot] = useState<State>(getSnapshot);
 
   useEffect(() => {
     setSnapshot(getSnapshot());
     const unsubscribe = subscribe(() => setSnapshot(getSnapshot()));
-    ensureLoaded();
+    getUserId().then((uid) => {
+      if (uid) ensureLoaded();
+    });
     return unsubscribe;
   }, []);
 
