@@ -270,14 +270,11 @@ export const actions = {
   },
 
   async deleteCategory(name: string) {
-    if (name === "אחר") {
-      toast.error('לא ניתן למחוק את הקטגוריה "אחר"');
-      return;
-    }
-    // Move products to "אחר"
+    const fallback = state.categories.find((c) => c !== name) ?? CATEGORIES[0];
+    // Move products to fallback category
     const { error: prodErr } = await supabase
       .from("products")
-      .update({ category: "אחר" })
+      .update({ category: fallback })
       .eq("category", name);
     if (prodErr) {
       toast.error("שגיאה במחיקה");
