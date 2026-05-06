@@ -39,13 +39,29 @@ export const Route = createFileRoute("/")({
 
 function MasterListPage() {
   const { products, loading, categories, lists } = useFamilyCart();
+  const { user } = useAuth();
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
   const [manageOpen, setManageOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [setupOpen, setSetupOpen] = useState(false);
+  const setupShownRef = useRef(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
   const [activeCat, setActiveCat] = useState<string>("__all__");
+
+  useEffect(() => {
+    if (loading || !user || setupShownRef.current) return;
+    if (products.length === 0) {
+      const key = `familycart:setup-shown:${user.id}`;
+      if (!localStorage.getItem(key)) {
+        setSetupOpen(true);
+        setupShownRef.current = true;
+        localStorage.setItem(key, "1");
+      }
+    }
+  }, [loading, user, products.length]);
 
   const activeLists = useMemo(() => lists.filter((l) => !l.is_completed), [lists]);
 
