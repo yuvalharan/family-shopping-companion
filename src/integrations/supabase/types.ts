@@ -70,6 +70,7 @@ export type Database = {
           created_at: string
           id: string
           is_checked: boolean
+          notes: string | null
           product_id: string
           quantity_needed: number
           shopping_list_id: string
@@ -79,6 +80,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_checked?: boolean
+          notes?: string | null
           product_id: string
           quantity_needed?: number
           shopping_list_id: string
@@ -88,6 +90,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_checked?: boolean
+          notes?: string | null
           product_id?: string
           quantity_needed?: number
           shopping_list_id?: string
