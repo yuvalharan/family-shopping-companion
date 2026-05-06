@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Sparkles, Loader2 } from "lucide-react";
+
 import { toast } from "sonner";
 import { UNITS, type Unit, type Product } from "@/lib/familycart-data";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
@@ -231,6 +232,8 @@ function ProductNameField({
 }) {
   const [focused, setFocused] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<BaseProduct | null>(null);
+  const [aiQuery, setAiQuery] = useState<string>("");
   const trimmed = value.trim();
 
   const matches = useMemo(() => {
@@ -239,31 +242,46 @@ function ProductNameField({
     return BASE_PRODUCTS.filter((p) => p.name.toLowerCase().includes(q)).slice(0, 6);
   }, [trimmed]);
 
-  const askAi = async () => {
-    if (!trimmed) return;
-    setAiLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("ai-product-search", {
-        body: { query: trimmed },
-      });
-      if (error) throw error;
-      if (data?.error) {
-        toast.error(data.error);
-        return;
-      }
-      if (data?.name && data?.category && data?.unit) {
-        onPick(data as BaseProduct);
-        toast.success("נמצאה הצעה מ-AI");
-      } else {
-        toast.error("לא נמצאה הצעה מתאימה");
-      }
-    } catch (e) {
-      console.error(e);
-      toast.error("שגיאה בחיפוש AI");
-    } finally {
-      setAiLoading(false);
+  useEffect(() => {
+    if (!focused || disabled) return;
+    if (!trimmed || trimmed.length < 2) {
+      setAiSuggestion(null);
+      return;
     }
-  };
+    if (matches.length > 0) {
+      setAiSuggestion(null);
+      return;
+    }
+    if (aiSuggestion && aiQuery === trimmed) return;
+
+    const handle = setTimeout(async () => {
+      setAiLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("ai-product-search", {
+          body: { query: trimmed },
+        });
+        if (error) throw error;
+        if (data?.error) {
+          if (data.error.includes("קרדיטים") || data.error.includes("בקשות")) {
+            toast.error(data.error);
+          }
+          return;
+        }
+        if (data?.name && data?.category && data?.unit) {
+          setAiSuggestion(data as BaseProduct);
+          setAiQuery(trimmed);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setAiLoading(false);
+      }
+    }, 1000);
+    return () => clearTimeout(handle);
+  }, [trimmed, matches.length, focused, disabled, aiSuggestion, aiQuery]);
+
+  const showDropdown = !disabled && focused && trimmed.length > 0 &&
+    (matches.length > 0 || aiLoading || aiSuggestion);
 
   return (
     <div className="relative">
@@ -277,48 +295,55 @@ function ProductNameField({
         disabled={disabled}
         autoComplete="off"
       />
-      {!disabled && focused && trimmed.length > 0 && (
+      {showDropdown && (
         <div className="absolute z-50 top-full mt-1 w-full bg-popover border border-border rounded-lg shadow-lg overflow-hidden">
-          {matches.length > 0 ? (
-            <ul className="max-h-56 overflow-y-auto">
-              {matches.map((p) => (
-                <li key={`${p.name}-${p.category}`}>
-                  <button
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => onPick(p)}
-                    className="w-full text-right px-3 py-2 hover:bg-muted flex items-center justify-between gap-2"
-                  >
-                    <span className="text-xs text-muted-foreground">
-                      {p.category} · {p.default_quantity} {p.unit}
+          <ul className="max-h-56 overflow-y-auto">
+            {matches.map((p) => (
+              <li key={`${p.name}-${p.category}`}>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => onPick(p)}
+                  className="w-full text-right px-3 py-2 hover:bg-muted flex items-center justify-between gap-2"
+                >
+                  <span className="text-xs text-muted-foreground">
+                    {p.category} · {p.default_quantity} {p.unit}
+                  </span>
+                  <span className="text-sm font-medium">{p.name}</span>
+                </button>
+              </li>
+            ))}
+            {matches.length === 0 && aiLoading && (
+              <li className="px-3 py-2 flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" />
+                מחפש הצעה חכמה...
+              </li>
+            )}
+            {matches.length === 0 && !aiLoading && aiSuggestion && (
+              <li>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => { onPick(aiSuggestion); setAiSuggestion(null); }}
+                  className="w-full text-right px-3 py-2 hover:bg-muted flex items-center justify-between gap-2"
+                >
+                  <span className="text-xs text-muted-foreground">
+                    {aiSuggestion.category} · {aiSuggestion.default_quantity} {aiSuggestion.unit}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1 text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                      <Sparkles className="size-3" />
+                      הצעת AI
                     </span>
-                    <span className="text-sm font-medium">{p.name}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="p-2">
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={askAi}
-                disabled={aiLoading}
-                className="w-full"
-              >
-                {aiLoading ? (
-                  <Loader2 className="size-4 ms-1 animate-spin" />
-                ) : (
-                  <Sparkles className="size-4 ms-1" />
-                )}
-                חפש עם AI
-              </Button>
-            </div>
-          )}
+                    <span className="text-sm font-medium">{aiSuggestion.name}</span>
+                  </span>
+                </button>
+              </li>
+            )}
+          </ul>
         </div>
       )}
     </div>
   );
 }
+
