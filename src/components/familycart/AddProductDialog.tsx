@@ -1,12 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus } from "lucide-react";
+import { Plus, Sparkles, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { UNITS, type Unit, type Product } from "@/lib/familycart-data";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
+import { BASE_PRODUCTS, type BaseProduct } from "@/lib/base-products";
+import { supabase } from "@/integrations/supabase/client";
 
 const ADD_NEW_SENTINEL = "__add_new__";
 
