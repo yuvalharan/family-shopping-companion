@@ -157,10 +157,16 @@ function MasterListPage() {
             </div>
             <h2 className="text-xl font-semibold mb-2">המחסן ריק</h2>
             <p className="text-muted-foreground mb-6">הוסף את המוצרים הקבועים שלך</p>
-            <Button onClick={() => setAddOpen(true)} size="lg" className="rounded-2xl">
-              <Plus className="size-5 ms-1" />
-              הוסף מוצר ראשון
-            </Button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+              <Button onClick={() => setSetupOpen(true)} size="lg" className="rounded-2xl">
+                <Download className="size-5 ms-1" />
+                ייבא מוצרים נפוצים
+              </Button>
+              <Button onClick={() => setAddOpen(true)} size="lg" variant="outline" className="rounded-2xl">
+                <Plus className="size-5 ms-1" />
+                הוסף מוצר ראשון
+              </Button>
+            </div>
           </div>
         )}
         {!loading && !isEmpty && grouped.length === 0 && (
