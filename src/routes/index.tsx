@@ -48,12 +48,18 @@ function MasterListPage() {
   const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
   const [manageOpen, setManageOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [aiPrefill, setAiPrefill] = useState<AiSuggestion | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [setupOpen, setSetupOpen] = useState(false);
   const setupShownRef = useRef(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
   const [activeCat, setActiveCat] = useState<string>("__all__");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<AiSuggestion | null>(null);
+  const [aiQuery, setAiQuery] = useState("");
+
 
   useEffect(() => {
     if (loading || !user || setupShownRef.current) return;
