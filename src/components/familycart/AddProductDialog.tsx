@@ -28,7 +28,7 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange }
   };
 
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("אחר");
+  const [category, setCategory] = useState(categories[0] ?? "");
   const [qty, setQty] = useState(1);
   const [unit, setUnit] = useState<Unit>("יחידות");
   const [addingCategory, setAddingCategory] = useState(false);
