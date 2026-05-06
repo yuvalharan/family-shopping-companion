@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Pencil, Trash2, Settings2, Search, X, Plus, ShoppingCart, PackagePlus, CirclePlus, Download } from "lucide-react";
+import { Pencil, Trash2, Settings2, Search, X, Plus, ShoppingCart, PackagePlus, CirclePlus, Download, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/familycart/AppHeader";
 import { AddProductDialog } from "@/components/familycart/AddProductDialog";
@@ -20,10 +20,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { type Product } from "@/lib/familycart-data";
+import { type Product, type Unit } from "@/lib/familycart-data";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
 import { formatQuantity } from "@/lib/units";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
+
+type AiSuggestion = { name: string; category: string; default_quantity: number; unit: Unit };
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -44,12 +48,18 @@ function MasterListPage() {
   const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
   const [manageOpen, setManageOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [aiPrefill, setAiPrefill] = useState<AiSuggestion | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [setupOpen, setSetupOpen] = useState(false);
   const setupShownRef = useRef(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
   const [activeCat, setActiveCat] = useState<string>("__all__");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<AiSuggestion | null>(null);
+  const [aiQuery, setAiQuery] = useState("");
+
 
   useEffect(() => {
     if (loading || !user || setupShownRef.current) return;
@@ -88,8 +98,66 @@ function MasterListPage() {
     }));
   }, [products, categories, search, activeCat]);
 
+  const totalMatches = useMemo(
+    () => grouped.reduce((sum, g) => sum + g.products.length, 0),
+    [grouped],
+  );
+
+  const trimmedSearch = search.trim();
+
+  useEffect(() => {
+    if (!searchFocused) return;
+    if (trimmedSearch.length < 2) {
+      setAiSuggestion(null);
+      return;
+    }
+    if (totalMatches > 0) {
+      setAiSuggestion(null);
+      return;
+    }
+    if (aiSuggestion && aiQuery === trimmedSearch) return;
+
+    let cancelled = false;
+    setAiLoading(true);
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("ai-product-search", {
+          body: { query: trimmedSearch },
+        });
+        if (cancelled) return;
+        if (error) throw error;
+        if (data?.error) {
+          if (data.error.includes("קרדיטים") || data.error.includes("בקשות")) {
+            toast.error(data.error);
+          }
+          return;
+        }
+        if (data?.name && data?.category && data?.unit) {
+          setAiSuggestion(data as AiSuggestion);
+          setAiQuery(trimmedSearch);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        if (!cancelled) setAiLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [trimmedSearch, totalMatches, searchFocused]);
+
   const isFiltering = search.trim().length > 0 || activeCat !== "__all__";
   const isEmpty = !loading && products.length === 0;
+
+  const showSearchDropdown = searchFocused && trimmedSearch.length > 0 && totalMatches === 0 &&
+    (aiLoading || aiSuggestion);
+
+  const openAddWithPrefill = (s: AiSuggestion) => {
+    setAiPrefill(s);
+    setAddOpen(true);
+    setAiSuggestion(null);
+    setSearch("");
+  };
+
 
   return (
     <div className="min-h-dvh bg-background">
@@ -119,6 +187,8 @@ function MasterListPage() {
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setTimeout(() => setSearchFocused(false), 150)}
                 placeholder="חיפוש מוצר..."
                 className="pr-9 pl-9 h-11 rounded-xl"
               />
@@ -131,7 +201,43 @@ function MasterListPage() {
                   <X className="size-4" />
                 </button>
               )}
+              {showSearchDropdown && (
+                <div className="absolute z-50 top-full mt-1 w-full bg-popover border border-border rounded-lg shadow-lg overflow-hidden">
+                  {aiLoading && (
+                    <div className="px-3 py-2 flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="size-4 animate-spin" />
+                      מחפש הצעה חכמה...
+                    </div>
+                  )}
+                  {!aiLoading && aiSuggestion && (
+                    <div className="px-3 py-2 flex items-center justify-between gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => openAddWithPrefill(aiSuggestion)}
+                      >
+                        + הוסף
+                      </Button>
+                      <div className="flex flex-col items-end gap-0.5 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium truncate">{aiSuggestion.name}</span>
+                          <span className="inline-flex items-center gap-1 text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded shrink-0">
+                            <Sparkles className="size-3" />
+                            הצעת AI
+                          </span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {aiSuggestion.category} · {aiSuggestion.default_quantity} {aiSuggestion.unit}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+
 
             <Select value={activeCat} onValueChange={setActiveCat}>
               <SelectTrigger className="h-11 rounded-xl">
@@ -220,9 +326,16 @@ function MasterListPage() {
         })}
       </main>
       {isEmpty ? (
-        <AddProductDialog open={addOpen} onOpenChange={setAddOpen} />
+        <AddProductDialog open={addOpen} onOpenChange={(v) => { setAddOpen(v); if (!v) setAiPrefill(null); }} prefill={aiPrefill ?? undefined} />
       ) : (
-        <AddProductDialog />
+        <>
+          <AddProductDialog />
+          <AddProductDialog
+            open={addOpen}
+            onOpenChange={(v) => { setAddOpen(v); if (!v) setAiPrefill(null); }}
+            prefill={aiPrefill ?? undefined}
+          />
+        </>
       )}
       {editProduct && (
         <AddProductDialog

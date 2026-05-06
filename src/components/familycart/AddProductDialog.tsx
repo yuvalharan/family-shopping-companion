@@ -1,16 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Sparkles, Loader2 } from "lucide-react";
-
-import { toast } from "sonner";
+import { Plus } from "lucide-react";
 import { UNITS, type Unit, type Product } from "@/lib/familycart-data";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
-import { BASE_PRODUCTS, type BaseProduct } from "@/lib/base-products";
-import { supabase } from "@/integrations/supabase/client";
+
 
 const ADD_NEW_SENTINEL = "__add_new__";
 
@@ -18,9 +15,10 @@ type Props = {
   product?: Product;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  prefill?: { name: string; category: string; default_quantity: number; unit: Unit };
 };
 
-export function AddProductDialog({ product, open: controlledOpen, onOpenChange }: Props) {
+export function AddProductDialog({ product, open: controlledOpen, onOpenChange, prefill }: Props) {
   const { categories } = useFamilyCart();
   const isEdit = !!product;
 
@@ -48,6 +46,11 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange }
       setCategory(product.category);
       setQty(product.default_quantity);
       setUnit(product.unit);
+    } else if (prefill) {
+      setName(prefill.name);
+      setCategory(prefill.category);
+      setQty(prefill.default_quantity);
+      setUnit(prefill.unit);
     } else {
       setName("");
       setCategory(categories[0] ?? "");
@@ -57,6 +60,7 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange }
     setAddingCategory(false);
     setNewCatName("");
   }, [open]);
+
 
   const handleCategoryChange = (v: string) => {
     if (v === ADD_NEW_SENTINEL) {
@@ -106,16 +110,13 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange }
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="prod-name">שם המוצר</Label>
-          <ProductNameField
+          <Input
+            id="prod-name"
             value={name}
-            onChange={setName}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="לדוגמה: לחם פרוס"
             disabled={isEdit}
-            onPick={(bp) => {
-              setName(bp.name);
-              setCategory(bp.category);
-              setQty(bp.default_quantity);
-              setUnit(bp.unit);
-            }}
+            autoComplete="off"
           />
         </div>
         <div className="space-y-2">
@@ -218,136 +219,3 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange }
     </Dialog>
   );
 }
-
-function ProductNameField({
-  value,
-  onChange,
-  onPick,
-  disabled,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  onPick: (bp: BaseProduct) => void;
-  disabled?: boolean;
-}) {
-  const [focused, setFocused] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiSuggestion, setAiSuggestion] = useState<BaseProduct | null>(null);
-  const [aiQuery, setAiQuery] = useState<string>("");
-  const trimmed = value.trim();
-
-  const matches = useMemo(() => {
-    if (!trimmed) return [];
-    const q = trimmed.toLowerCase();
-    return BASE_PRODUCTS.filter((p) => p.name.toLowerCase().includes(q)).slice(0, 6);
-  }, [trimmed]);
-
-  useEffect(() => {
-    if (!focused || disabled) return;
-    if (!trimmed || trimmed.length < 2) {
-      setAiSuggestion(null);
-      return;
-    }
-    if (matches.length > 0) {
-      setAiSuggestion(null);
-      return;
-    }
-    if (aiSuggestion && aiQuery === trimmed) return;
-
-    const handle = setTimeout(async () => {
-      setAiLoading(true);
-      try {
-        const { data, error } = await supabase.functions.invoke("ai-product-search", {
-          body: { query: trimmed },
-        });
-        if (error) throw error;
-        if (data?.error) {
-          if (data.error.includes("קרדיטים") || data.error.includes("בקשות")) {
-            toast.error(data.error);
-          }
-          return;
-        }
-        if (data?.name && data?.category && data?.unit) {
-          setAiSuggestion(data as BaseProduct);
-          setAiQuery(trimmed);
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setAiLoading(false);
-      }
-    }, 0);
-    return () => clearTimeout(handle);
-  }, [trimmed, matches.length, focused, disabled, aiSuggestion, aiQuery]);
-
-  const showDropdown = !disabled && focused && trimmed.length > 0 &&
-    (matches.length > 0 || aiLoading || aiSuggestion);
-
-  return (
-    <div className="relative">
-      <Input
-        id="prod-name"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setTimeout(() => setFocused(false), 150)}
-        placeholder="לדוגמה: לחם פרוס"
-        disabled={disabled}
-        autoComplete="off"
-      />
-      {showDropdown && (
-        <div className="absolute z-50 top-full mt-1 w-full bg-popover border border-border rounded-lg shadow-lg overflow-hidden">
-          <ul className="max-h-56 overflow-y-auto">
-            {matches.map((p) => (
-              <li key={`${p.name}-${p.category}`}>
-                <button
-                  type="button"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => onPick(p)}
-                  className="w-full text-right px-3 py-2 hover:bg-muted flex items-center justify-between gap-2"
-                >
-                  <span className="text-sm font-medium">{p.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {p.category} · {p.default_quantity} {p.unit}
-                  </span>
-                </button>
-              </li>
-            ))}
-            {matches.length === 0 && aiLoading && (
-              <li className="px-3 py-2 flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="size-4 animate-spin" />
-                מחפש הצעה חכמה...
-              </li>
-            )}
-            {matches.length === 0 && !aiLoading && aiSuggestion && (
-              <li className="px-3 py-2 flex items-center justify-between gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => { onPick(aiSuggestion); setAiSuggestion(null); }}
-                >
-                  + הוסף
-                </Button>
-                <div className="flex flex-col items-end gap-0.5 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium truncate">{aiSuggestion.name}</span>
-                    <span className="inline-flex items-center gap-1 text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded shrink-0">
-                      <Sparkles className="size-3" />
-                      הצעת AI
-                    </span>
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {aiSuggestion.category} · {aiSuggestion.default_quantity} {aiSuggestion.unit}
-                  </span>
-                </div>
-              </li>
-            )}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
-
