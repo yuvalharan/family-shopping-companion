@@ -52,5 +52,6 @@ export type ShoppingItem = {
   product_id: string;
   quantity_needed: number;
   is_checked: boolean;
+  notes?: string | null;
   created_at?: string;
 };
