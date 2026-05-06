@@ -435,7 +435,7 @@ export const actions = {
   },
 
   async setQuantity(itemId: string, qty: number) {
-    const value = Math.max(1, qty);
+    const value = qty > 0 ? qty : 1;
     state = {
       ...state,
       items: state.items.map((i) => (i.id === itemId ? { ...i, quantity_needed: value } : i)),
@@ -446,5 +446,33 @@ export const actions = {
       .update({ quantity_needed: value })
       .eq("id", itemId);
     if (error) toast.error("שגיאה בשמירה");
+  },
+
+  async setItemNotes(itemId: string, notes: string) {
+    const trimmed = notes.trim();
+    const value = trimmed.length > 0 ? trimmed : null;
+    state = {
+      ...state,
+      items: state.items.map((i) => (i.id === itemId ? { ...i, notes: value } : i)),
+    };
+    emit();
+    const { error } = await supabase
+      .from("shopping_items")
+      .update({ notes: value })
+      .eq("id", itemId);
+    if (error) toast.error("שגיאה בשמירה");
+  },
+
+  async reactivateShoppingList(id: string) {
+    state = {
+      ...state,
+      lists: state.lists.map((l) => (l.id === id ? { ...l, is_completed: false, completed_at: null } : l)),
+    };
+    emit();
+    const { error } = await supabase
+      .from("shopping_lists")
+      .update({ is_completed: false, completed_at: null })
+      .eq("id", id);
+    if (error) toast.error("שגיאה בביטול הסיום");
   },
 };
