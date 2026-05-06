@@ -209,6 +209,21 @@ export const actions = {
     toast.success("המוצר נוסף בהצלחה");
   },
 
+  async addProductsBulk(inputs: Array<{ name: string; category: string; default_quantity: number; unit: Unit }>) {
+    if (inputs.length === 0) return 0;
+    const uid = await getUserId();
+    if (!uid) return 0;
+    const rows = inputs.map((i) => ({ ...i, user_id: uid }));
+    const { data, error } = await supabase.from("products").insert(rows).select();
+    if (error || !data) {
+      toast.error("שגיאה בייבוא המוצרים");
+      return 0;
+    }
+    state = { ...state, products: [...state.products, ...(data as unknown as Product[])] };
+    emit();
+    return data.length;
+  },
+
   async updateProduct(id: string, input: { name: string; category: string; default_quantity: number; unit: Unit }) {
     const { error } = await supabase.from("products").update(input).eq("id", id);
     if (error) {
@@ -270,14 +285,11 @@ export const actions = {
   },
 
   async deleteCategory(name: string) {
-    if (name === "אחר") {
-      toast.error('לא ניתן למחוק את הקטגוריה "אחר"');
-      return;
-    }
-    // Move products to "אחר"
+    const fallback = state.categories.find((c) => c !== name) ?? CATEGORIES[0];
+    // Move products to fallback category
     const { error: prodErr } = await supabase
       .from("products")
-      .update({ category: "אחר" })
+      .update({ category: fallback })
       .eq("category", name);
     if (prodErr) {
       toast.error("שגיאה במחיקה");
@@ -287,7 +299,7 @@ export const actions = {
     state = {
       ...state,
       categories: state.categories.filter((c) => c !== name),
-      products: state.products.map((p) => (p.category === name ? { ...p, category: "אחר" } : p)),
+      products: state.products.map((p) => (p.category === name ? { ...p, category: fallback } : p)),
     };
     emit();
     toast.success("הקטגוריה נמחקה");

@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Pencil, Trash2, Settings2, Search, X, Plus, ShoppingCart, PackagePlus, CirclePlus } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Pencil, Trash2, Settings2, Search, X, Plus, ShoppingCart, PackagePlus, CirclePlus, Download } from "lucide-react";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/familycart/AppHeader";
 import { AddProductDialog } from "@/components/familycart/AddProductDialog";
 import { ManageCategoriesDialog } from "@/components/familycart/ManageCategoriesDialog";
+import { ImportProductsDialog } from "@/components/familycart/ImportProductsDialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -22,6 +23,7 @@ import {
 import { type Product } from "@/lib/familycart-data";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
 import { formatQuantity } from "@/lib/units";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -37,13 +39,29 @@ export const Route = createFileRoute("/")({
 
 function MasterListPage() {
   const { products, loading, categories, lists } = useFamilyCart();
+  const { user } = useAuth();
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
   const [manageOpen, setManageOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [setupOpen, setSetupOpen] = useState(false);
+  const setupShownRef = useRef(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
   const [activeCat, setActiveCat] = useState<string>("__all__");
+
+  useEffect(() => {
+    if (loading || !user || setupShownRef.current) return;
+    if (products.length === 0) {
+      const key = `familycart:setup-shown:${user.id}`;
+      if (!localStorage.getItem(key)) {
+        setSetupOpen(true);
+        setupShownRef.current = true;
+        localStorage.setItem(key, "1");
+      }
+    }
+  }, [loading, user, products.length]);
 
   const activeLists = useMemo(() => lists.filter((l) => !l.is_completed), [lists]);
 
@@ -79,7 +97,14 @@ function MasterListPage() {
       <main className="mx-auto max-w-xl px-4 py-6 pb-32 space-y-5">
         {!isEmpty && !loading && (
           <>
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setImportOpen(true)}
+                className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Download className="size-4" />
+                ייבא מוצרים נפוצים
+              </button>
               <button
                 onClick={() => setManageOpen(true)}
                 className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -132,10 +157,16 @@ function MasterListPage() {
             </div>
             <h2 className="text-xl font-semibold mb-2">המחסן ריק</h2>
             <p className="text-muted-foreground mb-6">הוסף את המוצרים הקבועים שלך</p>
-            <Button onClick={() => setAddOpen(true)} size="lg" className="rounded-2xl">
-              <Plus className="size-5 ms-1" />
-              הוסף מוצר ראשון
-            </Button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+              <Button onClick={() => setSetupOpen(true)} size="lg" className="rounded-2xl">
+                <Download className="size-5 ms-1" />
+                ייבא מוצרים נפוצים
+              </Button>
+              <Button onClick={() => setAddOpen(true)} size="lg" variant="outline" className="rounded-2xl">
+                <Plus className="size-5 ms-1" />
+                הוסף מוצר ראשון
+              </Button>
+            </div>
           </div>
         )}
         {!loading && !isEmpty && grouped.length === 0 && (
@@ -201,6 +232,13 @@ function MasterListPage() {
         />
       )}
       <ManageCategoriesDialog open={manageOpen} onOpenChange={setManageOpen} />
+      <ImportProductsDialog open={importOpen} onOpenChange={setImportOpen} />
+      <ImportProductsDialog
+        open={setupOpen}
+        onOpenChange={setSetupOpen}
+        title="בואו נגדיר את המחסן שלך"
+        subtitle="בחר את המוצרים שאתה קונה בדרך כלל"
+      />
       <AlertDialog open={!!deleteProduct} onOpenChange={(v) => { if (!v) setDeleteProduct(null); }}>
         <AlertDialogContent dir="rtl">
           <AlertDialogHeader>

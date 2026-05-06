@@ -58,7 +58,7 @@ export function ManageCategoriesDialog({ open, onOpenChange }: Props) {
           {categories.map((c) => {
             const isEditing = editing === c;
             const isConfirming = confirmDelete === c;
-            const isProtected = c === "אחר";
+            const isProtected = false;
             return (
               <div key={c} className="bg-surface rounded-xl p-3 flex items-center gap-2">
                 {isEditing ? (
