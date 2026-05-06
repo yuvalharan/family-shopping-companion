@@ -306,10 +306,10 @@ function ProductNameField({
                   onClick={() => onPick(p)}
                   className="w-full text-right px-3 py-2 hover:bg-muted flex items-center justify-between gap-2"
                 >
+                  <span className="text-sm font-medium">{p.name}</span>
                   <span className="text-xs text-muted-foreground">
                     {p.category} · {p.default_quantity} {p.unit}
                   </span>
-                  <span className="text-sm font-medium">{p.name}</span>
                 </button>
               </li>
             ))}
