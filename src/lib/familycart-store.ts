@@ -209,6 +209,21 @@ export const actions = {
     toast.success("המוצר נוסף בהצלחה");
   },
 
+  async addProductsBulk(inputs: Array<{ name: string; category: string; default_quantity: number; unit: Unit }>) {
+    if (inputs.length === 0) return 0;
+    const uid = await getUserId();
+    if (!uid) return 0;
+    const rows = inputs.map((i) => ({ ...i, user_id: uid }));
+    const { data, error } = await supabase.from("products").insert(rows).select();
+    if (error || !data) {
+      toast.error("שגיאה בייבוא המוצרים");
+      return 0;
+    }
+    state = { ...state, products: [...state.products, ...(data as unknown as Product[])] };
+    emit();
+    return data.length;
+  },
+
   async updateProduct(id: string, input: { name: string; category: string; default_quantity: number; unit: Unit }) {
     const { error } = await supabase.from("products").update(input).eq("id", id);
     if (error) {
