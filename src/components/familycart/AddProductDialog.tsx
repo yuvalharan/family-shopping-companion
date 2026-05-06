@@ -276,7 +276,7 @@ function ProductNameField({
       } finally {
         setAiLoading(false);
       }
-    }, 1000);
+    }, 0);
     return () => clearTimeout(handle);
   }, [trimmed, matches.length, focused, disabled, aiSuggestion, aiQuery]);
 
