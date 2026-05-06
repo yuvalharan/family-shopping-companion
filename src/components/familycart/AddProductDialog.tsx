@@ -320,24 +320,28 @@ function ProductNameField({
               </li>
             )}
             {matches.length === 0 && !aiLoading && aiSuggestion && (
-              <li>
-                <button
+              <li className="px-3 py-2 flex items-center justify-between gap-2">
+                <Button
                   type="button"
+                  size="sm"
+                  variant="outline"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => { onPick(aiSuggestion); setAiSuggestion(null); }}
-                  className="w-full text-right px-3 py-2 hover:bg-muted flex items-center justify-between gap-2"
                 >
-                  <span className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{aiSuggestion.name}</span>
-                    <span className="inline-flex items-center gap-1 text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                  + הוסף
+                </Button>
+                <div className="flex flex-col items-end gap-0.5 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium truncate">{aiSuggestion.name}</span>
+                    <span className="inline-flex items-center gap-1 text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded shrink-0">
                       <Sparkles className="size-3" />
                       הצעת AI
                     </span>
-                  </span>
+                  </div>
                   <span className="text-xs text-muted-foreground">
                     {aiSuggestion.category} · {aiSuggestion.default_quantity} {aiSuggestion.unit}
                   </span>
-                </button>
+                </div>
               </li>
             )}
           </ul>
