@@ -284,7 +284,7 @@ export const actions = {
     state = {
       ...state,
       categories: state.categories.filter((c) => c !== name),
-      products: state.products.map((p) => (p.category === name ? { ...p, category: "אחר" } : p)),
+      products: state.products.map((p) => (p.category === name ? { ...p, category: fallback } : p)),
     };
     emit();
     toast.success("הקטגוריה נמחקה");
