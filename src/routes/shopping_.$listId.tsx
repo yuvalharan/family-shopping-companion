@@ -195,13 +195,11 @@ function ShoppingListDetailPage() {
               return (
                 <ItemRow
                   key={item.id}
+                  itemId={item.id}
                   product={p}
                   qty={item.quantity_needed}
+                  notes={item.notes ?? null}
                   checked={false}
-                  onToggle={() => actions.toggleChecked(item.id)}
-                  onInc={() => actions.setQuantity(item.id, item.quantity_needed + 1)}
-                  onDec={() => actions.setQuantity(item.id, item.quantity_needed - 1)}
-                  onRemove={() => actions.removeItem(item.id)}
                 />
               );
             })}
