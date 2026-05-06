@@ -8,7 +8,7 @@ import {
   Search,
   Trash2,
   Pencil,
-  StickyNote,
+  
 } from "lucide-react";
 import { formatQuantity } from "@/lib/units";
 import { AppHeader } from "@/components/familycart/AppHeader";
