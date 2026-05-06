@@ -15,9 +15,10 @@ type Props = {
   product?: Product;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  prefill?: { name: string; category: string; default_quantity: number; unit: Unit };
 };
 
-export function AddProductDialog({ product, open: controlledOpen, onOpenChange }: Props) {
+export function AddProductDialog({ product, open: controlledOpen, onOpenChange, prefill }: Props) {
   const { categories } = useFamilyCart();
   const isEdit = !!product;
 
@@ -45,6 +46,11 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange }
       setCategory(product.category);
       setQty(product.default_quantity);
       setUnit(product.unit);
+    } else if (prefill) {
+      setName(prefill.name);
+      setCategory(prefill.category);
+      setQty(prefill.default_quantity);
+      setUnit(prefill.unit);
     } else {
       setName("");
       setCategory(categories[0] ?? "");
@@ -54,6 +60,7 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange }
     setAddingCategory(false);
     setNewCatName("");
   }, [open]);
+
 
   const handleCategoryChange = (v: string) => {
     if (v === ADD_NEW_SENTINEL) {
