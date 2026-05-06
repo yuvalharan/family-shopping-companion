@@ -282,62 +282,142 @@ function ShoppingListDetailPage() {
 }
 
 function ItemRow({
+  itemId,
   product,
   qty,
+  notes,
   checked,
-  onToggle,
-  onInc,
-  onDec,
-  onRemove,
 }: {
+  itemId: string;
   product: Product;
   qty: number;
+  notes: string | null;
   checked: boolean;
-  onToggle: () => void;
-  onInc: () => void;
-  onDec: () => void;
-  onRemove: () => void;
 }) {
+  const [editingQty, setEditingQty] = useState(false);
+  const [qtyDraft, setQtyDraft] = useState(String(qty));
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [notesDraft, setNotesDraft] = useState(notes ?? "");
+
+  const startQty = () => {
+    setQtyDraft(String(qty));
+    setEditingQty(true);
+  };
+  const commitQty = () => {
+    const parsed = parseFloat(qtyDraft);
+    const n = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+    setEditingQty(false);
+    if (n !== qty) actions.setQuantity(itemId, n);
+  };
+
+  const startNotes = () => {
+    setNotesDraft(notes ?? "");
+    setEditingNotes(true);
+  };
+  const commitNotes = () => {
+    setEditingNotes(false);
+    if ((notesDraft ?? "") !== (notes ?? "")) {
+      actions.setItemNotes(itemId, notesDraft);
+    }
+  };
+
+  const display = formatQuantity(qty, product.unit);
+
   return (
     <div
       className={
-        "rounded-2xl shadow-soft p-4 flex items-center justify-between gap-3 transition-colors " +
+        "rounded-2xl shadow-soft p-4 flex items-start justify-between gap-3 transition-colors " +
         (checked ? "bg-green-100 dark:bg-green-900/30 opacity-70" : "bg-surface")
       }
     >
-      <label className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer">
+      <div className="flex items-start gap-3 min-w-0 flex-1">
         <input
           type="checkbox"
           checked={checked}
-          onChange={onToggle}
-          className="size-5 accent-primary shrink-0"
+          onChange={() => actions.toggleChecked(itemId)}
+          className="size-5 accent-primary shrink-0 mt-0.5"
+          aria-label="סמן כנאסף"
         />
-        <div className="min-w-0">
-          <div className="font-medium truncate">
-            {product.name}
-          </div>
-          <div className="text-sm text-muted-foreground">{formatQuantity(qty, product.unit).unit}</div>
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <div className="font-medium truncate">{product.name}</div>
+
+          {editingQty ? (
+            <div className="flex items-center gap-1.5">
+              <Input
+                autoFocus
+                type="number"
+                inputMode="decimal"
+                step="any"
+                min={0}
+                value={qtyDraft}
+                onChange={(e) => setQtyDraft(e.target.value)}
+                onBlur={commitQty}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") commitQty();
+                  if (e.key === "Escape") setEditingQty(false);
+                }}
+                className="h-7 w-16 px-2 text-sm"
+              />
+              <span className="text-sm text-muted-foreground">{product.unit}</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={startQty}
+                aria-label="ערוך כמות"
+                className="inline-flex items-center justify-center min-w-9 h-7 px-2 text-sm rounded-md border border-input bg-muted text-foreground hover:border-ring hover:bg-muted/70 transition-colors"
+              >
+                {display.value}
+              </button>
+              <span className="text-sm text-muted-foreground">{display.unit}</span>
+            </div>
+          )}
+
+          {editingNotes ? (
+            <Input
+              autoFocus
+              value={notesDraft}
+              onChange={(e) => setNotesDraft(e.target.value)}
+              onBlur={commitNotes}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitNotes();
+                if (e.key === "Escape") setEditingNotes(false);
+              }}
+              placeholder="הערה (לדוגמה: תנובה 3% בלבד)"
+              className="h-7 text-xs"
+            />
+          ) : notes ? (
+            <button
+              onClick={startNotes}
+              className="text-xs text-muted-foreground italic hover:text-foreground text-right block w-full truncate"
+            >
+              {notes}
+            </button>
+          ) : null}
         </div>
-      </label>
-      <div className="flex items-center gap-1 shrink-0">
+      </div>
+      <div className="flex items-center gap-0.5 shrink-0">
+        {!editingNotes && !notes && (
+          <button
+            onClick={startNotes}
+            className="size-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted flex items-center justify-center"
+            aria-label="הוסף הערה"
+          >
+            <StickyNote className="size-3.5" />
+          </button>
+        )}
+        {!editingNotes && notes && (
+          <button
+            onClick={startNotes}
+            className="size-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted flex items-center justify-center"
+            aria-label="ערוך הערה"
+          >
+            <Pencil className="size-3.5" />
+          </button>
+        )}
         <button
-          onClick={onDec}
-          className="size-8 rounded-full border border-border hover:bg-muted flex items-center justify-center"
-          aria-label="הפחת"
-        >
-          <Minus className="size-3.5" />
-        </button>
-        <span className="min-w-7 px-1 text-center font-medium tabular-nums">{formatQuantity(qty, product.unit).value}</span>
-        <button
-          onClick={onInc}
-          className="size-8 rounded-full border border-border hover:bg-muted flex items-center justify-center"
-          aria-label="הוסף"
-        >
-          <Plus className="size-3.5" />
-        </button>
-        <button
-          onClick={onRemove}
-          className="size-8 ms-1 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex items-center justify-center"
+          onClick={() => actions.removeItem(itemId)}
+          className="size-8 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex items-center justify-center"
           aria-label="הסר"
         >
           <Trash2 className="size-3.5" />
