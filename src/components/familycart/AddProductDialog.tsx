@@ -119,6 +119,12 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
             disabled={isEdit}
             autoComplete="off"
           />
+          {!isEdit && <NameSuggestions query={name} onPick={(p) => {
+            setName(p.name);
+            setCategory(p.category);
+            setQty(p.default_quantity);
+            setUnit(p.unit);
+          }} />}
         </div>
         <div className="space-y-2">
           <Label>קטגוריה</Label>
