@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Pencil, Trash2, Settings2, Search, X, Plus, ShoppingCart, PackagePlus, CirclePlus, Download } from "lucide-react";
+import { Pencil, Trash2, Settings2, Search, X, Plus, ShoppingCart, PackagePlus, CirclePlus, Download, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/familycart/AppHeader";
 import { AddProductDialog } from "@/components/familycart/AddProductDialog";
@@ -20,10 +20,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { type Product } from "@/lib/familycart-data";
+import { type Product, type Unit } from "@/lib/familycart-data";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
 import { formatQuantity } from "@/lib/units";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
+
+type AiSuggestion = { name: string; category: string; default_quantity: number; unit: Unit };
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
