@@ -326,9 +326,16 @@ function MasterListPage() {
         })}
       </main>
       {isEmpty ? (
-        <AddProductDialog open={addOpen} onOpenChange={setAddOpen} />
+        <AddProductDialog open={addOpen} onOpenChange={(v) => { setAddOpen(v); if (!v) setAiPrefill(null); }} prefill={aiPrefill ?? undefined} />
       ) : (
-        <AddProductDialog />
+        <>
+          <AddProductDialog />
+          <AddProductDialog
+            open={addOpen}
+            onOpenChange={(v) => { setAddOpen(v); if (!v) setAiPrefill(null); }}
+            prefill={aiPrefill ?? undefined}
+          />
+        </>
       )}
       {editProduct && (
         <AddProductDialog
