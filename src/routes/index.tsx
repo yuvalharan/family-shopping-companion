@@ -232,6 +232,13 @@ function MasterListPage() {
         />
       )}
       <ManageCategoriesDialog open={manageOpen} onOpenChange={setManageOpen} />
+      <ImportProductsDialog open={importOpen} onOpenChange={setImportOpen} />
+      <ImportProductsDialog
+        open={setupOpen}
+        onOpenChange={setSetupOpen}
+        title="בואו נגדיר את המחסן שלך"
+        subtitle="בחר את המוצרים שאתה קונה בדרך כלל"
+      />
       <AlertDialog open={!!deleteProduct} onOpenChange={(v) => { if (!v) setDeleteProduct(null); }}>
         <AlertDialogContent dir="rtl">
           <AlertDialogHeader>
