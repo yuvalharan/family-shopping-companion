@@ -171,7 +171,7 @@ function ShoppingListDetailPage() {
           </button>
         </div>
 
-        <div className="text-sm text-muted-foreground">
+        <div className="text-xl font-bold">
           {pending.length === 0
             ? "הכל נאסף! 🛒"
             : `${pending.length} פריטים נותרו`}
