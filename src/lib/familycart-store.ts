@@ -129,8 +129,14 @@ function subscribe(cb: () => void) {
 }
 const getSnapshot = () => state;
 
+async function getUserId(): Promise<string | null> {
+  const { data } = await supabase.auth.getUser();
+  return data.user?.id ?? null;
+}
+
 let loaded = false;
 let loadingPromise: Promise<void> | null = null;
+let currentUserId: string | null = null;
 
 async function loadAll() {
   const [productsRes, itemsRes, listsRes, categoriesRes] = await Promise.all([
@@ -162,13 +168,27 @@ function ensureLoaded() {
   return loadingPromise;
 }
 
+supabase.auth.onAuthStateChange((_e, session) => {
+  const newUserId = session?.user?.id ?? null;
+  if (newUserId !== currentUserId) {
+    currentUserId = newUserId;
+    loaded = false;
+    loadingPromise = null;
+    state = { products: [], items: [], lists: [], categories: [...CATEGORIES], loading: !!newUserId };
+    emit();
+    if (newUserId) ensureLoaded();
+  }
+});
+
 export function useFamilyCart() {
   const [snapshot, setSnapshot] = useState<State>(getSnapshot);
 
   useEffect(() => {
     setSnapshot(getSnapshot());
     const unsubscribe = subscribe(() => setSnapshot(getSnapshot()));
-    ensureLoaded();
+    getUserId().then((uid) => {
+      if (uid) ensureLoaded();
+    });
     return unsubscribe;
   }, []);
 
@@ -177,7 +197,9 @@ export function useFamilyCart() {
 
 export const actions = {
   async addProduct(input: { name: string; category: string; default_quantity: number; unit: Unit }) {
-    const { data, error } = await supabase.from("products").insert(input).select().single();
+    const uid = await getUserId();
+    if (!uid) return;
+    const { data, error } = await supabase.from("products").insert({ ...input, user_id: uid }).select().single();
     if (error || !data) {
       toast.error("שגיאה בשמירה, אנא נסה שוב");
       return;
@@ -209,7 +231,7 @@ export const actions = {
     if (existing) return { ok: false, error: "קטגוריה זו כבר קיימת" };
     state = { ...state, categories: [...state.categories, trimmed] };
     emit();
-    const { error } = await supabase.from("categories").insert({ name: trimmed });
+    const { error } = await supabase.from("categories").insert({ name: trimmed, user_id: (await getUserId()) ?? undefined });
     if (error) {
       toast.error("שגיאה בשמירה, אנא נסה שוב");
       return { ok: false, error: "שגיאה בשמירה" };
@@ -235,7 +257,7 @@ export const actions = {
       return { ok: false, error: "שגיאה בשמירה" };
     }
     // Insert new category, delete old (if it was in categories table)
-    await supabase.from("categories").insert({ name: trimmed });
+    await supabase.from("categories").insert({ name: trimmed, user_id: (await getUserId()) ?? undefined });
     await supabase.from("categories").delete().eq("name", oldName);
     state = {
       ...state,
@@ -289,9 +311,11 @@ export const actions = {
   async createShoppingList(name: string): Promise<ShoppingList | null> {
     const trimmed = name.trim();
     if (!trimmed) return null;
+    const uid = await getUserId();
+    if (!uid) return null;
     const { data, error } = await supabase
       .from("shopping_lists")
-      .insert({ name: trimmed })
+      .insert({ name: trimmed, user_id: uid })
       .select()
       .single();
     if (error || !data) {
@@ -354,6 +378,8 @@ export const actions = {
       await this.setQuantity(existing.id, qty);
       return;
     }
+    const uid = await getUserId();
+    if (!uid) return;
     const { data, error } = await supabase
       .from("shopping_items")
       .insert({
@@ -361,6 +387,7 @@ export const actions = {
         product_id: product.id,
         quantity_needed: qty,
         is_checked: false,
+        user_id: uid,
       })
       .select()
       .single();

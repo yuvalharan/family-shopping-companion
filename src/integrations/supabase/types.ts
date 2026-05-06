@@ -19,16 +19,19 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
           id?: string
           name: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
           id?: string
           name?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -40,6 +43,7 @@ export type Database = {
           id: string
           name: string
           unit: string
+          user_id: string | null
         }
         Insert: {
           category: string
@@ -48,6 +52,7 @@ export type Database = {
           id?: string
           name: string
           unit: string
+          user_id?: string | null
         }
         Update: {
           category?: string
@@ -56,6 +61,7 @@ export type Database = {
           id?: string
           name?: string
           unit?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -67,6 +73,7 @@ export type Database = {
           product_id: string
           quantity_needed: number
           shopping_list_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -75,6 +82,7 @@ export type Database = {
           product_id: string
           quantity_needed?: number
           shopping_list_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -83,6 +91,7 @@ export type Database = {
           product_id?: string
           quantity_needed?: number
           shopping_list_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -108,6 +117,7 @@ export type Database = {
           id: string
           is_completed: boolean
           name: string
+          user_id: string | null
         }
         Insert: {
           completed_at?: string | null
@@ -115,6 +125,7 @@ export type Database = {
           id?: string
           is_completed?: boolean
           name: string
+          user_id?: string | null
         }
         Update: {
           completed_at?: string | null
@@ -122,6 +133,7 @@ export type Database = {
           id?: string
           is_completed?: boolean
           name?: string
+          user_id?: string | null
         }
         Relationships: []
       }
