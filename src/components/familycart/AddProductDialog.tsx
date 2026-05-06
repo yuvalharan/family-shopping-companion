@@ -105,11 +105,16 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange }
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="prod-name">שם המוצר</Label>
-          <Input
-            id="prod-name"
+          <ProductNameField
             value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="לדוגמה: לחם פרוס"
+            onChange={setName}
+            disabled={isEdit}
+            onPick={(bp) => {
+              setName(bp.name);
+              setCategory(bp.category);
+              setQty(bp.default_quantity);
+              setUnit(bp.unit);
+            }}
           />
         </div>
         <div className="space-y-2">
