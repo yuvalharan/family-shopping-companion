@@ -296,7 +296,6 @@ function ItemRow({
 }) {
   const [editingQty, setEditingQty] = useState(false);
   const [qtyDraft, setQtyDraft] = useState(String(qty));
-  const [editingNotes, setEditingNotes] = useState(false);
   const [notesDraft, setNotesDraft] = useState(notes ?? "");
 
   const startQty = () => {
@@ -310,12 +309,7 @@ function ItemRow({
     if (n !== qty) actions.setQuantity(itemId, n);
   };
 
-  const startNotes = () => {
-    setNotesDraft(notes ?? "");
-    setEditingNotes(true);
-  };
   const commitNotes = () => {
-    setEditingNotes(false);
     if ((notesDraft ?? "") !== (notes ?? "")) {
       actions.setItemNotes(itemId, notesDraft);
     }
