@@ -177,14 +177,25 @@ function ShoppingListDetailPage() {
             : `${pending.length} פריטים נותרו`}
         </div>
 
-        <Button
-          variant="outline"
-          className="w-full justify-start h-12 rounded-2xl"
-          onClick={() => setAddOpen(true)}
-        >
-          <Plus className="size-5 ms-2" />
-          הוסף פריט
-        </Button>
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            variant="outline"
+            className="h-12 rounded-2xl"
+            onClick={() => setAddOpen(true)}
+          >
+            <Plus className="size-5 ms-2" />
+            הוסף פריט
+          </Button>
+          <Button
+            variant="outline"
+            className="h-12 rounded-2xl"
+            onClick={() => actions.saveListAsTemplate(list.id)}
+            disabled={listItems.length === 0}
+          >
+            <Bookmark className="size-5 ms-2" />
+            שמור כתבנית
+          </Button>
+        </div>
 
         {pending.length > 0 && (
           <section className="space-y-2.5">
