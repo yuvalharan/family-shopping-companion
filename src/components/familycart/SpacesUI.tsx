@@ -447,3 +447,56 @@ export function JoinInviteHandler() {
     </Dialog>
   );
 }
+
+function ImportFromPersonalSection({ targetSpaceId }: { targetSpaceId: string }) {
+  const { spaces } = useFamilyCart();
+  const personal = spaces.find((s) => s.is_personal);
+  const [open, setOpen] = useState(false);
+  const [products, setProducts] = useState(true);
+  const [activeLists, setActiveLists] = useState(false);
+  const [savedLists, setSavedLists] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  if (!personal) return null;
+
+  const submit = async () => {
+    if (!products && !activeLists && !savedLists) return;
+    setBusy(true);
+    const ok = await actions.copyDataBetweenSpaces(personal.id, targetSpaceId, { products, activeLists, savedLists });
+    setBusy(false);
+    if (ok) { toast.success("הנתונים יובאו בהצלחה"); setOpen(false); }
+  };
+
+  return (
+    <>
+      <Button variant="outline" className="w-full" onClick={() => setOpen(true)}>
+        <Download className="size-4 ml-1" /> ייבא מהמרחב האישי
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent dir="rtl" className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-right">ייבוא מהמרחב האישי</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <CheckRow label="רשימה ראשית (מוצרים וקטגוריות)" checked={products} onChange={setProducts} />
+            <CheckRow label="רשימות קנייה פעילות" checked={activeLists} onChange={setActiveLists} />
+            <CheckRow label="רשימות שמורות" checked={savedLists} onChange={setSavedLists} />
+          </div>
+          <DialogFooter className="sm:justify-start gap-2">
+            <Button onClick={submit} disabled={busy || (!products && !activeLists && !savedLists)}>ייבא נבחרים</Button>
+            <Button variant="ghost" onClick={() => setOpen(false)}>ביטול</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+function CheckRow({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex items-center gap-3 p-3 rounded-lg border cursor-pointer">
+      <Checkbox checked={checked} onCheckedChange={(v) => onChange(v === true)} />
+      <span className="text-sm flex-1">{label}</span>
+    </label>
+  );
+}
