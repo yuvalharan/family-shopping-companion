@@ -2,26 +2,19 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Plus, ShoppingCart, ChevronDown, Trash2, Bookmark } from "lucide-react";
 import { SavedListsDialog } from "@/components/familycart/SavedListsDialog";
+import { SpaceBadge } from "@/components/familycart/SpacesUI";
 import { formatQuantity } from "@/lib/units";
 import { AppHeader } from "@/components/familycart/AppHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
 import type { ShoppingList } from "@/lib/familycart-data";
