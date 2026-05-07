@@ -671,14 +671,18 @@ export const actions = {
           .insert({ name: l.name, user_id: uid, space_id: targetSpaceId }).select().single();
         if (error || !newList) continue;
         const rows = items.filter((it) => it.saved_list_id === l.id)
-          .map((it) => ({
-            saved_list_id: (newList as { id: string }).id,
-            product_id: productIdMap.get(it.product_id),
-            quantity_needed: it.quantity_needed,
-            user_id: uid,
-            space_id: targetSpaceId,
-          }))
-          .filter((r) => !!r.product_id);
+          .map((it) => {
+            const pid = productIdMap.get(it.product_id);
+            if (!pid) return null;
+            return {
+              saved_list_id: (newList as { id: string }).id,
+              product_id: pid,
+              quantity_needed: it.quantity_needed,
+              user_id: uid,
+              space_id: targetSpaceId,
+            };
+          })
+          .filter((r): r is NonNullable<typeof r> => r !== null);
         if (rows.length > 0) await supabase.from("saved_list_items").insert(rows);
       }
     }
