@@ -496,7 +496,7 @@ export const actions = {
       .select()
       .single();
     if (error || !savedList) {
-      toast.error("שגיאה בשמירת התבנית");
+      toast.error("שגיאה בשמירת הרשימה");
       return null;
     }
     const saved = savedList as unknown as SavedList;
@@ -513,7 +513,7 @@ export const actions = {
         .insert(rows)
         .select();
       if (itemsErr) {
-        toast.error("שגיאה בשמירת פריטי התבנית");
+        toast.error("שגיאה בשמירת פריטי הרשימה");
       } else if (itemsData) {
         savedItems = itemsData as unknown as SavedListItem[];
       }
@@ -524,7 +524,7 @@ export const actions = {
       savedItems: [...state.savedItems, ...savedItems],
     };
     emit();
-    toast.success("הרשימה נשמרה כתבנית");
+    toast.success("הרשימה נשמרה");
     return saved;
   },
 
@@ -540,7 +540,7 @@ export const actions = {
       savedItems: state.savedItems.filter((i) => i.saved_list_id !== id),
     };
     emit();
-    toast.success("התבנית נמחקה");
+    toast.success("הרשימה נמחקה");
   },
 
   async loadSavedListAsActive(savedListId: string, name: string): Promise<ShoppingList | null> {
@@ -584,7 +584,7 @@ export const actions = {
       items: [...state.items, ...newItems],
     };
     emit();
-    toast.success("רשימה חדשה נוצרה מהתבנית");
+    toast.success("רשימה חדשה נוצרה");
     return list;
   },
 };
