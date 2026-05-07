@@ -561,6 +561,128 @@ export const actions = {
     return row ?? null;
   },
 
+  async copyDataBetweenSpaces(
+    sourceSpaceId: string,
+    targetSpaceId: string,
+    opts: { products: boolean; activeLists: boolean; savedLists: boolean },
+  ): Promise<boolean> {
+    const uid = await getUserId();
+    if (!uid) return false;
+    if (sourceSpaceId === targetSpaceId) return false;
+    const needProducts = opts.products || opts.activeLists || opts.savedLists;
+
+    // Fetch source data fresh from DB to avoid stale state
+    const [srcProductsRes, srcCatsRes, srcListsRes, srcItemsRes, srcSavedRes, srcSavedItemsRes,
+           tgtProductsRes, tgtCatsRes] = await Promise.all([
+      supabase.from("products").select("*").eq("space_id", sourceSpaceId),
+      supabase.from("categories").select("name").eq("space_id", sourceSpaceId),
+      opts.activeLists
+        ? supabase.from("shopping_lists").select("*").eq("space_id", sourceSpaceId).eq("is_completed", false)
+        : Promise.resolve({ data: [] as Array<{ id: string; name: string }> }),
+      opts.activeLists
+        ? supabase.from("shopping_items").select("*").eq("space_id", sourceSpaceId)
+        : Promise.resolve({ data: [] as Array<{ shopping_list_id: string; product_id: string; quantity_needed: number; notes: string | null }> }),
+      opts.savedLists
+        ? supabase.from("saved_lists").select("*").eq("space_id", sourceSpaceId)
+        : Promise.resolve({ data: [] as Array<{ id: string; name: string }> }),
+      opts.savedLists
+        ? supabase.from("saved_list_items").select("*").eq("space_id", sourceSpaceId)
+        : Promise.resolve({ data: [] as Array<{ saved_list_id: string; product_id: string; quantity_needed: number }> }),
+      needProducts
+        ? supabase.from("products").select("*").eq("space_id", targetSpaceId)
+        : Promise.resolve({ data: [] as Array<{ id: string; name: string }> }),
+      opts.products
+        ? supabase.from("categories").select("name").eq("space_id", targetSpaceId)
+        : Promise.resolve({ data: [] as Array<{ name: string }> }),
+    ]);
+
+    const srcProducts = (srcProductsRes.data ?? []) as Array<{ id: string; name: string; category: string; default_quantity: number; unit: Unit }>;
+    const tgtProducts = (tgtProductsRes.data ?? []) as Array<{ id: string; name: string }>;
+
+    // Map source product id -> target product id (existing or newly created)
+    const productIdMap = new Map<string, string>();
+    const tgtByName = new Map<string, string>();
+    tgtProducts.forEach((p) => tgtByName.set(p.name.trim().toLowerCase(), p.id));
+
+    // Categories (only when copying products)
+    if (opts.products) {
+      const tgtCatNames = new Set(((tgtCatsRes.data ?? []) as Array<{ name: string }>).map((c) => c.name.toLowerCase()));
+      const builtinLower = new Set(CATEGORIES.map((c) => c.toLowerCase()));
+      const newCats = ((srcCatsRes.data ?? []) as Array<{ name: string }>)
+        .filter((c) => !tgtCatNames.has(c.name.toLowerCase()) && !builtinLower.has(c.name.toLowerCase()))
+        .map((c) => ({ name: c.name, user_id: uid, space_id: targetSpaceId }));
+      if (newCats.length > 0) await supabase.from("categories").insert(newCats);
+    }
+
+    // Products: insert missing-by-name; map ids for both new and existing
+    const toInsertProducts: Array<{ name: string; category: string; default_quantity: number; unit: Unit; user_id: string; space_id: string }> = [];
+    const toInsertSourceIds: string[] = [];
+    for (const p of srcProducts) {
+      const key = p.name.trim().toLowerCase();
+      const existingId = tgtByName.get(key);
+      if (existingId) {
+        productIdMap.set(p.id, existingId);
+      } else if (needProducts) {
+        toInsertProducts.push({ name: p.name, category: p.category, default_quantity: p.default_quantity, unit: p.unit, user_id: uid, space_id: targetSpaceId });
+        toInsertSourceIds.push(p.id);
+      }
+    }
+    if (toInsertProducts.length > 0) {
+      const { data: inserted, error } = await supabase.from("products").insert(toInsertProducts).select();
+      if (error) { toast.error("שגיאה בייבוא"); return false; }
+      (inserted ?? []).forEach((row, idx) => {
+        productIdMap.set(toInsertSourceIds[idx], (row as { id: string }).id);
+      });
+    }
+
+    // Active lists
+    if (opts.activeLists) {
+      const lists = (srcListsRes.data ?? []) as Array<{ id: string; name: string }>;
+      const items = (srcItemsRes.data ?? []) as Array<{ shopping_list_id: string; product_id: string; quantity_needed: number; notes: string | null }>;
+      for (const l of lists) {
+        const { data: newList, error } = await supabase.from("shopping_lists")
+          .insert({ name: l.name, user_id: uid, space_id: targetSpaceId }).select().single();
+        if (error || !newList) continue;
+        const rows = items.filter((it) => it.shopping_list_id === l.id)
+          .map((it) => ({
+            shopping_list_id: (newList as { id: string }).id,
+            product_id: productIdMap.get(it.product_id),
+            quantity_needed: it.quantity_needed,
+            notes: it.notes,
+            is_checked: false,
+            user_id: uid,
+            space_id: targetSpaceId,
+          }))
+          .filter((r) => !!r.product_id);
+        if (rows.length > 0) await supabase.from("shopping_items").insert(rows);
+      }
+    }
+
+    // Saved lists
+    if (opts.savedLists) {
+      const lists = (srcSavedRes.data ?? []) as Array<{ id: string; name: string }>;
+      const items = (srcSavedItemsRes.data ?? []) as Array<{ saved_list_id: string; product_id: string; quantity_needed: number }>;
+      for (const l of lists) {
+        const { data: newList, error } = await supabase.from("saved_lists")
+          .insert({ name: l.name, user_id: uid, space_id: targetSpaceId }).select().single();
+        if (error || !newList) continue;
+        const rows = items.filter((it) => it.saved_list_id === l.id)
+          .map((it) => ({
+            saved_list_id: (newList as { id: string }).id,
+            product_id: productIdMap.get(it.product_id),
+            quantity_needed: it.quantity_needed,
+            user_id: uid,
+            space_id: targetSpaceId,
+          }))
+          .filter((r) => !!r.product_id);
+        if (rows.length > 0) await supabase.from("saved_list_items").insert(rows);
+      }
+    }
+
+    await loadAll();
+    return true;
+  },
+
   async getSpaceMembers(spaceId: string) {
     const { data, error } = await supabase.rpc("get_space_members", { _space_id: spaceId });
     if (error) return [];
