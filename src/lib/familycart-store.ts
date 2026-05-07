@@ -2,13 +2,15 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CATEGORIES } from "./familycart-data";
-import type { Product, ShoppingItem, ShoppingList, Unit } from "./familycart-data";
+import type { Product, SavedList, SavedListItem, ShoppingItem, ShoppingList, Unit } from "./familycart-data";
 
 type State = {
   products: Product[];
   items: ShoppingItem[];
   lists: ShoppingList[];
   categories: string[];
+  savedLists: SavedList[];
+  savedItems: SavedListItem[];
   loading: boolean;
 };
 
@@ -17,6 +19,8 @@ let state: State = {
   items: [],
   lists: [],
   categories: [],
+  savedLists: [],
+  savedItems: [],
   loading: true,
 };
 
@@ -139,11 +143,13 @@ let loadingPromise: Promise<void> | null = null;
 let currentUserId: string | null = null;
 
 async function loadAll() {
-  const [productsRes, itemsRes, listsRes, categoriesRes] = await Promise.all([
+  const [productsRes, itemsRes, listsRes, categoriesRes, savedListsRes, savedItemsRes] = await Promise.all([
     supabase.from("products").select("*").order("created_at", { ascending: true }),
     supabase.from("shopping_items").select("*").order("created_at", { ascending: true }),
     supabase.from("shopping_lists").select("*").order("created_at", { ascending: false }),
     supabase.from("categories").select("name").order("created_at", { ascending: true }),
+    supabase.from("saved_lists").select("*").order("created_at", { ascending: false }),
+    supabase.from("saved_list_items").select("*").order("created_at", { ascending: true }),
   ]);
   const dbCategories = ((categoriesRes.data ?? []) as Array<{ name: string }>).map((r) => r.name);
   state = {
@@ -151,6 +157,8 @@ async function loadAll() {
     items: (itemsRes.data ?? []) as unknown as ShoppingItem[],
     lists: (listsRes.data ?? []) as unknown as ShoppingList[],
     categories: [...new Set([...CATEGORIES, ...dbCategories])],
+    savedLists: (savedListsRes.data ?? []) as unknown as SavedList[],
+    savedItems: (savedItemsRes.data ?? []) as unknown as SavedListItem[],
     loading: false,
   };
   emit();
@@ -174,7 +182,7 @@ supabase.auth.onAuthStateChange((_e, session) => {
     currentUserId = newUserId;
     loaded = false;
     loadingPromise = null;
-    state = { products: [], items: [], lists: [], categories: [...CATEGORIES], loading: !!newUserId };
+    state = { products: [], items: [], lists: [], categories: [...CATEGORIES], savedLists: [], savedItems: [], loading: !!newUserId };
     emit();
     if (newUserId) ensureLoaded();
   }
@@ -474,5 +482,109 @@ export const actions = {
       .update({ is_completed: false, completed_at: null })
       .eq("id", id);
     if (error) toast.error("שגיאה בביטול הסיום");
+  },
+
+  async saveListAsTemplate(listId: string): Promise<SavedList | null> {
+    const list = state.lists.find((l) => l.id === listId);
+    if (!list) return null;
+    const uid = await getUserId();
+    if (!uid) return null;
+    const sourceItems = state.items.filter((i) => i.shopping_list_id === listId);
+    const { data: savedList, error } = await supabase
+      .from("saved_lists")
+      .insert({ name: list.name, user_id: uid })
+      .select()
+      .single();
+    if (error || !savedList) {
+      toast.error("שגיאה בשמירת התבנית");
+      return null;
+    }
+    const saved = savedList as unknown as SavedList;
+    let savedItems: SavedListItem[] = [];
+    if (sourceItems.length > 0) {
+      const rows = sourceItems.map((i) => ({
+        saved_list_id: saved.id,
+        product_id: i.product_id,
+        quantity_needed: i.quantity_needed,
+        user_id: uid,
+      }));
+      const { data: itemsData, error: itemsErr } = await supabase
+        .from("saved_list_items")
+        .insert(rows)
+        .select();
+      if (itemsErr) {
+        toast.error("שגיאה בשמירת פריטי התבנית");
+      } else if (itemsData) {
+        savedItems = itemsData as unknown as SavedListItem[];
+      }
+    }
+    state = {
+      ...state,
+      savedLists: [saved, ...state.savedLists],
+      savedItems: [...state.savedItems, ...savedItems],
+    };
+    emit();
+    toast.success("הרשימה נשמרה כתבנית");
+    return saved;
+  },
+
+  async deleteSavedList(id: string) {
+    const { error } = await supabase.from("saved_lists").delete().eq("id", id);
+    if (error) {
+      toast.error("שגיאה במחיקה");
+      return;
+    }
+    state = {
+      ...state,
+      savedLists: state.savedLists.filter((l) => l.id !== id),
+      savedItems: state.savedItems.filter((i) => i.saved_list_id !== id),
+    };
+    emit();
+    toast.success("התבנית נמחקה");
+  },
+
+  async loadSavedListAsActive(savedListId: string, name: string): Promise<ShoppingList | null> {
+    const trimmed = name.trim();
+    if (!trimmed) return null;
+    const uid = await getUserId();
+    if (!uid) return null;
+    const templateItems = state.savedItems.filter((i) => i.saved_list_id === savedListId);
+    const { data: listData, error } = await supabase
+      .from("shopping_lists")
+      .insert({ name: trimmed, user_id: uid })
+      .select()
+      .single();
+    if (error || !listData) {
+      toast.error("שגיאה ביצירת הרשימה");
+      return null;
+    }
+    const list = listData as unknown as ShoppingList;
+    let newItems: ShoppingItem[] = [];
+    if (templateItems.length > 0) {
+      const rows = templateItems.map((i) => ({
+        shopping_list_id: list.id,
+        product_id: i.product_id,
+        quantity_needed: i.quantity_needed,
+        is_checked: false,
+        user_id: uid,
+      }));
+      const { data: itemsData, error: itemsErr } = await supabase
+        .from("shopping_items")
+        .insert(rows)
+        .select();
+      if (itemsErr) {
+        toast.error("שגיאה בהוספת פריטים");
+      } else if (itemsData) {
+        newItems = itemsData as unknown as ShoppingItem[];
+      }
+    }
+    state = {
+      ...state,
+      lists: [list, ...state.lists],
+      items: [...state.items, ...newItems],
+    };
+    emit();
+    toast.success("רשימה חדשה נוצרה מהתבנית");
+    return list;
   },
 };
