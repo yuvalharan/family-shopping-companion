@@ -35,6 +35,7 @@ export type Product = {
   category: string;
   default_quantity: number;
   unit: Unit;
+  space_id: string;
   created_at?: string;
 };
 
@@ -43,6 +44,7 @@ export type ShoppingList = {
   name: string;
   is_completed: boolean;
   completed_at?: string | null;
+  space_id: string;
   created_at?: string;
 };
 
@@ -53,12 +55,14 @@ export type ShoppingItem = {
   quantity_needed: number;
   is_checked: boolean;
   notes?: string | null;
+  space_id: string;
   created_at?: string;
 };
 
 export type SavedList = {
   id: string;
   name: string;
+  space_id: string;
   created_at?: string;
 };
 
@@ -67,6 +71,7 @@ export type SavedListItem = {
   saved_list_id: string;
   product_id: string;
   quantity_needed: number;
+  space_id: string;
   created_at?: string;
 };
 
