@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { Check, ChevronDown, Copy, Plus, Settings, User, Users, UserPlus, Trash2, LogOut, SlidersHorizontal, Tags } from "lucide-react";
+import { Check, ChevronDown, Copy, Plus, Settings, User, Users, UserPlus, Trash2, LogOut, Tags } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ManageCategoriesDialog } from "@/components/familycart/ManageCategoriesDialog";
 import { toast } from "sonner";
@@ -118,7 +118,7 @@ export function SettingsPanelButton() {
   return (
     <>
       <Button size="sm" variant="ghost" onClick={() => setOpen(true)} aria-label="הגדרות">
-        <SlidersHorizontal className="size-4" />
+        <Settings className="size-4" />
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent dir="rtl" className="max-w-md">
