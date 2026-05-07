@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus, ShoppingCart, ChevronDown, Trash2 } from "lucide-react";
+import { Plus, ShoppingCart, ChevronDown, Trash2, Bookmark } from "lucide-react";
+import { SavedListsDialog } from "@/components/familycart/SavedListsDialog";
 import { formatQuantity } from "@/lib/units";
 import { AppHeader } from "@/components/familycart/AppHeader";
 import { Button } from "@/components/ui/button";
