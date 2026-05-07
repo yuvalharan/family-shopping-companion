@@ -474,14 +474,19 @@ export const actions = {
     if (!trimmed) return null;
     const uid = await getUserId();
     if (!uid) return null;
-    // pick next color: count of non-personal spaces
     const colorIndex = state.spaces.filter((s) => !s.is_personal).length;
-    const { data, error } = await supabase.from("shared_spaces")
-      .insert({ name: trimmed, owner_id: uid, is_personal: false, color_index: colorIndex }).select().single();
-    if (error || !data) { toast.error("שגיאה ביצירת המרחב"); return null; }
+    // Generate the ID client-side so we can add the owner as a member before
+    // fetching — the SELECT RLS policy requires is_space_member, which needs
+    // a space_members row to exist first.
+    const spaceId = crypto.randomUUID();
+    const { error: insertError } = await supabase.from("shared_spaces")
+      .insert({ id: spaceId, name: trimmed, owner_id: uid, is_personal: false, color_index: colorIndex });
+    if (insertError) { toast.error("שגיאה ביצירת המרחב"); console.error(insertError); return null; }
+    const { error: memberError } = await supabase.from("space_members").insert({ space_id: spaceId, user_id: uid });
+    if (memberError) { toast.error("שגיאה ביצירת המרחב"); console.error(memberError); return null; }
+    const { data, error: fetchError } = await supabase.from("shared_spaces").select().eq("id", spaceId).single();
+    if (fetchError || !data) { toast.error("שגיאה ביצירת המרחב"); console.error(fetchError); return null; }
     const space = data as unknown as SharedSpace;
-    // owner becomes member
-    await supabase.from("space_members").insert({ space_id: space.id, user_id: uid });
     state = { ...state, spaces: [...state.spaces, space] }; emit();
     toast.success("המרחב נוצר");
     return space;
