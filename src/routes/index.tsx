@@ -150,40 +150,12 @@ function MasterListPage() {
                   <X className="size-4" />
                 </button>
               )}
-              {showSearchDropdown && (
-                <div className="absolute z-50 top-full mt-1 w-full bg-popover border border-border rounded-lg shadow-lg overflow-hidden">
-                  {aiLoading && (
-                    <div className="px-3 py-2 flex items-center gap-2 text-sm text-muted-foreground">
-                      <Loader2 className="size-4 animate-spin" />
-                      מחפש הצעה חכמה...
-                    </div>
-                  )}
-                  {!aiLoading && aiSuggestion && (
-                    <div className="px-3 py-2 flex items-center justify-between gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => openAddWithPrefill(aiSuggestion)}
-                      >
-                        + הוסף
-                      </Button>
-                      <div className="flex flex-col items-end gap-0.5 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium truncate">{aiSuggestion.name}</span>
-                          <span className="inline-flex items-center gap-1 text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded shrink-0">
-                            <Sparkles className="size-3" />
-                            הצעת AI
-                          </span>
-                        </div>
-                        <span className="text-xs text-muted-foreground">
-                          {aiSuggestion.category} · {aiSuggestion.default_quantity} {aiSuggestion.unit}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
+              {searchFocused && search.trim().length > 0 && (
+                <ProductAutocomplete
+                  query={search}
+                  onPick={openAddWithPrefill}
+                  className="absolute z-50 top-full mt-1 w-full bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
+                />
               )}
             </div>
 
@@ -275,14 +247,14 @@ function MasterListPage() {
         })}
       </main>
       {isEmpty ? (
-        <AddProductDialog open={addOpen} onOpenChange={(v) => { setAddOpen(v); if (!v) setAiPrefill(null); }} prefill={aiPrefill ?? undefined} />
+        <AddProductDialog open={addOpen} onOpenChange={(v) => { setAddOpen(v); if (!v) setPrefill(null); }} prefill={prefill ?? undefined} />
       ) : (
         <>
           <AddProductDialog />
           <AddProductDialog
             open={addOpen}
-            onOpenChange={(v) => { setAddOpen(v); if (!v) setAiPrefill(null); }}
-            prefill={aiPrefill ?? undefined}
+            onOpenChange={(v) => { setAddOpen(v); if (!v) setPrefill(null); }}
+            prefill={prefill ?? undefined}
           />
         </>
       )}
