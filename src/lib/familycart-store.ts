@@ -409,7 +409,7 @@ export const actions = {
     if (error) toast.error("שגיאה בביטול הסיום");
   },
 
-  async saveListAsTemplate(listId: string): Promise<SavedList | null> {
+  async saveListAsTemplate(listId: string, opts?: { overwriteId?: string }): Promise<SavedList | null> {
     const list = state.lists.find((l) => l.id === listId);
     if (!list) return null;
     const uid = await getUserId();
