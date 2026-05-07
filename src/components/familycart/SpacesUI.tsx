@@ -152,6 +152,9 @@ export function SettingsPanelButton() {
                 })}
               </div>
             </div>
+            <Button variant="outline" className="w-full" onClick={() => { setCategoriesOpen(true); setOpen(false); }}>
+              <Tags className="size-4 ml-1" /> נהל קטגוריות
+            </Button>
             <Button variant="outline" className="w-full" onClick={onLogout}>
               <LogOut className="size-4 ml-1" /> התנתק
             </Button>
@@ -159,6 +162,7 @@ export function SettingsPanelButton() {
         </DialogContent>
       </Dialog>
       <CreateSpaceDialog open={inviteOpen} onOpenChange={setInviteOpen} />
+      <ManageCategoriesDialog open={categoriesOpen} onOpenChange={setCategoriesOpen} />
       {spaceSettings && (
         <SpaceSettingsDialog
           space={spaceSettings}
