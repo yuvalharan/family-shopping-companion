@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { ShoppingBasket, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { SpaceSwitcher, InviteHeaderButton } from "@/components/familycart/SpacesUI";
 
 export function AppHeader() {
   const { pathname } = useLocation();
