@@ -196,17 +196,18 @@ export function useFamilyCart() {
 }
 
 export const actions = {
-  async addProduct(input: { name: string; category: string; default_quantity: number; unit: Unit }) {
+  async addProduct(input: { name: string; category: string; default_quantity: number; unit: Unit }): Promise<Product | undefined> {
     const uid = await getUserId();
-    if (!uid) return;
+    if (!uid) return undefined;
     const { data, error } = await supabase.from("products").insert({ ...input, user_id: uid }).select().single();
     if (error || !data) {
       toast.error("שגיאה בשמירה, אנא נסה שוב");
-      return;
+      return undefined;
     }
     state = { ...state, products: [...state.products, data as unknown as Product] };
     emit();
     toast.success("המוצר נוסף בהצלחה");
+    return data as unknown as Product;
   },
 
   async addProductsBulk(inputs: Array<{ name: string; category: string; default_quantity: number; unit: Unit }>) {

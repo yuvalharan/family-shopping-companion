@@ -466,12 +466,13 @@ function AddItemDialog({
             </SelectContent>
           </Select>
           <div className="flex-1 overflow-y-auto -mx-2 px-2 space-y-4">
-            {grouped.length === 0 && (
-              <p className="text-center text-muted-foreground py-8 text-sm">
-                לא נמצאו מוצרים
+            {grouped.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8 text-sm px-4">
+                {query.trim().length > 0
+                  ? "המוצר לא נמצא ברשימה הראשית — הוסף אותו תחילה דרך הרשימה הראשית"
+                  : "לא נמצאו מוצרים"}
               </p>
-            )}
-            {grouped.map(({ category, products }) => (
+            ) : grouped.map(({ category, products }) => (
               <section key={category}>
                 <h3 className="text-xs font-semibold text-muted-foreground mb-2">
                   {category}
@@ -483,7 +484,10 @@ function AddItemDialog({
                       <button
                         key={p.id}
                         disabled={already}
-                        onClick={() => actions.addItemToList(listId, p)}
+                        onClick={() => {
+                          actions.addItemToList(listId, p);
+                          onOpenChange(false);
+                        }}
                         className={
                           "w-full text-right rounded-xl px-3 py-2.5 flex items-center justify-between gap-2 transition-colors " +
                           (already
@@ -509,11 +513,6 @@ function AddItemDialog({
               </section>
             ))}
           </div>
-        </div>
-        <div className="mt-2">
-          <Button className="w-full" onClick={() => onOpenChange(false)}>
-            סיום
-          </Button>
         </div>
       </DialogContent>
     </Dialog>

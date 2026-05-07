@@ -17,9 +17,10 @@ type Props = {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   prefill?: { name: string; category: string; default_quantity: number; unit: Unit };
+  onProductAdded?: (product: Product) => void;
 };
 
-export function AddProductDialog({ product, open: controlledOpen, onOpenChange, prefill }: Props) {
+export function AddProductDialog({ product, open: controlledOpen, onOpenChange, prefill, onProductAdded }: Props) {
   const { categories } = useFamilyCart();
   const isEdit = !!product;
 
@@ -31,6 +32,7 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
   };
 
   const [name, setName] = useState("");
+  const [nameFocused, setNameFocused] = useState(false);
   const [category, setCategory] = useState(categories[0] ?? "");
   const [qty, setQty] = useState(1);
   const [unit, setUnit] = useState<Unit>("יחידות");
@@ -90,13 +92,14 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
     setNewCatName("");
   };
 
-  const submit = () => {
+  const submit = async () => {
     if (!name.trim()) return;
     const safeQty = qty > 0 ? qty : 1;
     if (isEdit && product) {
-      actions.updateProduct(product.id, { name: name.trim(), category, default_quantity: safeQty, unit });
+      await actions.updateProduct(product.id, { name: name.trim(), category, default_quantity: safeQty, unit });
     } else {
-      actions.addProduct({ name: name.trim(), category, default_quantity: safeQty, unit });
+      const saved = await actions.addProduct({ name: name.trim(), category, default_quantity: safeQty, unit });
+      if (saved) onProductAdded?.(saved);
     }
     handleOpenChange(false);
   };
@@ -118,13 +121,21 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
             placeholder="לדוגמה: לחם פרוס"
             disabled={isEdit}
             autoComplete="off"
+            onFocus={() => setNameFocused(true)}
+            onBlur={() => setTimeout(() => setNameFocused(false), 150)}
           />
-          {!isEdit && <ProductAutocomplete query={name} onPick={(p) => {
-            setName(p.name);
-            setCategory(p.category);
-            setQty(p.default_quantity);
-            setUnit(p.unit);
-          }} />}
+          {!isEdit && nameFocused && name.trim().length > 0 && (
+            <ProductAutocomplete
+              query={name}
+              onPick={(p) => {
+                setName(p.name);
+                setCategory(p.category);
+                setQty(p.default_quantity);
+                setUnit(p.unit);
+                setNameFocused(false);
+              }}
+            />
+          )}
         </div>
         <div className="space-y-2">
           <Label>קטגוריה</Label>
