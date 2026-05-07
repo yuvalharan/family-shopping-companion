@@ -416,6 +416,15 @@ export const actions = {
     if (!uid) return null;
     const sid = list.space_id;
     const sourceItems = state.items.filter((i) => i.shopping_list_id === listId);
+    if (opts?.overwriteId) {
+      await supabase.from("saved_list_items").delete().eq("saved_list_id", opts.overwriteId);
+      await supabase.from("saved_lists").delete().eq("id", opts.overwriteId);
+      state = {
+        ...state,
+        savedLists: state.savedLists.filter((l) => l.id !== opts.overwriteId),
+        savedItems: state.savedItems.filter((i) => i.saved_list_id !== opts.overwriteId),
+      };
+    }
     const { data: savedList, error } = await supabase.from("saved_lists")
       .insert({ name: list.name, user_id: uid, space_id: sid }).select().single();
     if (error || !savedList) { toast.error("שגיאה בשמירת הרשימה"); return null; }
