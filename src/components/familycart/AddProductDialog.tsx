@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus } from "lucide-react";
 import { UNITS, type Unit, type Product } from "@/lib/familycart-data";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
-import { BASE_PRODUCTS } from "@/lib/base-products";
+import { ProductAutocomplete } from "@/components/familycart/ProductAutocomplete";
 
 
 const ADD_NEW_SENTINEL = "__add_new__";
@@ -119,7 +119,7 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
             disabled={isEdit}
             autoComplete="off"
           />
-          {!isEdit && <NameSuggestions query={name} onPick={(p) => {
+          {!isEdit && <ProductAutocomplete query={name} onPick={(p) => {
             setName(p.name);
             setCategory(p.category);
             setQty(p.default_quantity);
@@ -224,73 +224,5 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
       </DialogTrigger>
       {content}
     </Dialog>
-  );
-}
-
-function NameSuggestions({ query, onPick }: { query: string; onPick: (p: { name: string; category: string; default_quantity: number; unit: Unit }) => void }) {
-  const q = query.trim();
-  const matches = useMemo(() => {
-    if (!q) return [];
-    return BASE_PRODUCTS.filter((p) => p.name.includes(q) && p.name !== q).slice(0, 6);
-  }, [q]);
-
-  const [aiSuggestion, setAiSuggestion] = useState<{ name: string; category: string; default_quantity: number; unit: Unit } | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
-  const aiQueryRef = useRef<string>("");
-
-  useEffect(() => {
-    if (!q || q.length < 2 || matches.length > 0) {
-      setAiSuggestion(null);
-      setAiLoading(false);
-      return;
-    }
-    let cancelled = false;
-    aiQueryRef.current = q;
-    setAiLoading(true);
-    setAiSuggestion(null);
-    (async () => {
-      try {
-        const { supabase } = await import("@/integrations/supabase/client");
-        const { data, error } = await supabase.functions.invoke("ai-product-search", { body: { query: q } });
-        if (cancelled || aiQueryRef.current !== q) return;
-        if (!error && data && data.name) setAiSuggestion(data);
-      } finally {
-        if (!cancelled && aiQueryRef.current === q) setAiLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [q, matches.length]);
-
-  if (matches.length === 0 && !aiSuggestion && !aiLoading) return null;
-
-  return (
-    <div className="rounded-md border bg-popover shadow-sm overflow-hidden">
-      {matches.map((p) => (
-        <button
-          key={p.name}
-          type="button"
-          onClick={() => onPick(p)}
-          className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm hover:bg-accent text-right"
-        >
-          <span className="text-xs text-muted-foreground">{p.default_quantity} {p.unit} · {p.category}</span>
-          <span className="font-medium">{p.name}</span>
-        </button>
-      ))}
-      {matches.length === 0 && aiLoading && (
-        <div className="px-3 py-2 text-xs text-muted-foreground text-right">מחפש הצעה...</div>
-      )}
-      {matches.length === 0 && aiSuggestion && (
-        <button
-          type="button"
-          onClick={() => onPick(aiSuggestion)}
-          className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm hover:bg-accent text-right"
-        >
-          <span className="text-xs text-muted-foreground">
-            {aiSuggestion.default_quantity} {aiSuggestion.unit} · {aiSuggestion.category} · הצעת AI
-          </span>
-          <span className="font-medium">{aiSuggestion.name}</span>
-        </button>
-      )}
-    </div>
   );
 }
