@@ -4,7 +4,7 @@ import { Pencil, Trash2, Search, X, Plus, ShoppingCart, PackagePlus, CirclePlus,
 import { toast } from "sonner";
 import { AppHeader } from "@/components/familycart/AppHeader";
 import { AddProductDialog } from "@/components/familycart/AddProductDialog";
-import { ManageCategoriesDialog } from "@/components/familycart/ManageCategoriesDialog";
+
 import { ImportProductsDialog } from "@/components/familycart/ImportProductsDialog";
 import { ProductAutocomplete, type ProductSuggestion } from "@/components/familycart/ProductAutocomplete";
 import { Input } from "@/components/ui/input";
