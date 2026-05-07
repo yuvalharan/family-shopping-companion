@@ -143,7 +143,10 @@ function ShoppingListsPage() {
                       >
                         <div className="flex items-center justify-between gap-3">
                           <div className="min-w-0">
-                            <div className="font-semibold text-base truncate">{list.name}</div>
+                            <div className="flex items-center gap-2">
+                              <div className="font-semibold text-base truncate">{list.name}</div>
+                              {spaceFor(list.space_id) && <SpaceBadge space={spaceFor(list.space_id)!} />}
+                            </div>
                             <div className="text-sm text-muted-foreground mt-0.5">
                               {s.total} פריטים · {s.checked} בעגלה
                             </div>
