@@ -33,6 +33,7 @@ function scoreMatch(product: BaseProduct, query: string) {
 
 export function ProductAutocomplete({ query, onPick, className }: ProductAutocompleteProps) {
   const q = query.trim();
+  const [suppressedQuery, setSuppressedQuery] = useState("");
   const matches = useMemo(() => {
     if (!q) return [];
     return BASE_PRODUCTS
@@ -46,6 +47,10 @@ export function ProductAutocomplete({ query, onPick, className }: ProductAutocom
   const [aiSuggestion, setAiSuggestion] = useState<ProductSuggestion | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const aiQueryRef = useRef("");
+
+  useEffect(() => {
+    if (q !== suppressedQuery) setSuppressedQuery("");
+  }, [q, suppressedQuery]);
 
   useEffect(() => {
     if (!q || q.length < 2 || matches.length > 0) {
@@ -85,12 +90,18 @@ export function ProductAutocomplete({ query, onPick, className }: ProductAutocom
     };
   }, [q, matches.length]);
 
+  if (q && q === suppressedQuery) return null;
   if (matches.length === 0 && !aiSuggestion && !aiLoading) return null;
+
+  const handlePick = (product: ProductSuggestion) => {
+    setSuppressedQuery(product.name);
+    onPick(product);
+  };
 
   return (
     <div className={className ?? "rounded-md border bg-popover shadow-sm overflow-hidden"} dir="rtl">
       {matches.map((product) => (
-        <SuggestionButton key={product.name} product={product} onPick={onPick} />
+        <SuggestionButton key={product.name} product={product} onPick={handlePick} />
       ))}
       {matches.length === 0 && aiLoading && (
         <div className="px-3 py-2 flex items-center gap-2 text-sm text-muted-foreground text-right">
@@ -99,7 +110,7 @@ export function ProductAutocomplete({ query, onPick, className }: ProductAutocom
         </div>
       )}
       {matches.length === 0 && aiSuggestion && (
-        <SuggestionButton product={aiSuggestion} onPick={onPick} ai />
+        <SuggestionButton product={aiSuggestion} onPick={handlePick} ai />
       )}
     </div>
   );
