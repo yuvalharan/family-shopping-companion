@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CATEGORIES } from "./familycart-data";
-import type { Product, ShoppingItem, ShoppingList, Unit } from "./familycart-data";
+import type { Product, SavedList, SavedListItem, ShoppingItem, ShoppingList, Unit } from "./familycart-data";
 
 type State = {
   products: Product[];
