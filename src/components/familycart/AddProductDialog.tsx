@@ -228,13 +228,11 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
 }
 
 function NameSuggestions({ query, onPick }: { query: string; onPick: (p: { name: string; category: string; default_quantity: number; unit: Unit }) => void }) {
-  const { products } = useFamilyCart();
-  const existingNames = useMemo(() => new Set(products.map((p) => p.name)), [products]);
   const q = query.trim();
   const matches = useMemo(() => {
     if (!q) return [];
-    return BASE_PRODUCTS.filter((p) => p.name.includes(q) && !existingNames.has(p.name) && p.name !== q).slice(0, 6);
-  }, [q, existingNames]);
+    return BASE_PRODUCTS.filter((p) => p.name.includes(q) && p.name !== q).slice(0, 6);
+  }, [q]);
 
   const [aiSuggestion, setAiSuggestion] = useState<{ name: string; category: string; default_quantity: number; unit: Unit } | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
