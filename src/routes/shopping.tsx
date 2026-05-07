@@ -182,7 +182,10 @@ function ShoppingListsPage() {
                           aria-expanded={isOpen}
                         >
                           <div className="min-w-0">
-                            <div className="font-semibold truncate">{list.name}</div>
+                            <div className="flex items-center gap-2">
+                              <div className="font-semibold truncate">{list.name}</div>
+                              {spaceFor(list.space_id) && <SpaceBadge space={spaceFor(list.space_id)!} />}
+                            </div>
                             <div className="text-sm text-muted-foreground mt-0.5">
                               {formatDate(list.completed_at ?? list.created_at)} · {listItems.length} פריטים
                             </div>
