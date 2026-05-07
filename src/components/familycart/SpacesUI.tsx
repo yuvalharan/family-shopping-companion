@@ -331,8 +331,7 @@ export function JoinInviteHandler() {
 
   const close = () => {
     setCode(null); setInfo(null); setError(null);
-    // strip query
-    navigate({ to: "/", search: {} as never, replace: true });
+    try { window.history.replaceState({}, "", window.location.pathname); } catch { /* ignore */ }
   };
 
   const join = async () => {
