@@ -293,6 +293,24 @@ function ShoppingListDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={!!confirmOverwrite} onOpenChange={(v) => { if (!v) setConfirmOverwrite(null); }}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-right">תבנית בשם זה כבר קיימת — האם לדרוס אותה?</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-start gap-2">
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (confirmOverwrite) actions.saveListAsTemplate(list.id, { overwriteId: confirmOverwrite });
+                setConfirmOverwrite(null);
+              }}
+            >דרוס</AlertDialogAction>
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
