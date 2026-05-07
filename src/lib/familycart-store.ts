@@ -182,7 +182,7 @@ supabase.auth.onAuthStateChange((_e, session) => {
     currentUserId = newUserId;
     loaded = false;
     loadingPromise = null;
-    state = { products: [], items: [], lists: [], categories: [...CATEGORIES], loading: !!newUserId };
+    state = { products: [], items: [], lists: [], categories: [...CATEGORIES], savedLists: [], savedItems: [], loading: !!newUserId };
     emit();
     if (newUserId) ensureLoaded();
   }
