@@ -13,6 +13,9 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Download } from "lucide-react";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
 import { spaceColorFor, type SharedSpace } from "@/lib/familycart-data";
 import { useAuth } from "@/lib/auth";
