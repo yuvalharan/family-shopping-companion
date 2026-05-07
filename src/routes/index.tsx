@@ -253,7 +253,7 @@ function MasterListPage() {
           onOpenChange={(v) => { if (!v) setEditProduct(null); }}
         />
       )}
-      <ManageCategoriesDialog open={manageOpen} onOpenChange={setManageOpen} />
+      
       <ImportProductsDialog open={importOpen} onOpenChange={setImportOpen} />
       <ImportProductsDialog
         open={setupOpen}
