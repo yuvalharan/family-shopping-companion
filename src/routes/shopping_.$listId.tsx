@@ -190,7 +190,11 @@ function ShoppingListDetailPage() {
           <Button
             variant="outline"
             className="h-12 rounded-2xl"
-            onClick={() => actions.saveListAsTemplate(list.id)}
+            onClick={() => {
+              const existing = savedLists.find((s) => s.space_id === list.space_id && s.name.trim() === list.name.trim());
+              if (existing) setConfirmOverwrite(existing.id);
+              else actions.saveListAsTemplate(list.id);
+            }}
             disabled={listItems.length === 0}
           >
             <Bookmark className="size-5 ms-2" />
