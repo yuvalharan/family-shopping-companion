@@ -100,15 +100,70 @@ export function SpaceSwitcher() {
   );
 }
 
-export function InviteHeaderButton() {
+export function SettingsPanelButton() {
   const [open, setOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [spaceSettings, setSpaceSettings] = useState<SharedSpace | null>(null);
+  const { spaces } = useFamilyCart();
+  const navigate = useNavigate();
+
+  const onLogout = async () => {
+    await supabase.auth.signOut();
+    setOpen(false);
+    navigate({ to: "/login" });
+  };
+
   return (
     <>
-      <Button size="sm" variant="ghost" onClick={() => setOpen(true)}>
-        <UserPlus className="size-4 ml-1" />
-        הזמן משתתפים
+      <Button size="sm" variant="ghost" onClick={() => setOpen(true)} aria-label="הגדרות">
+        <SlidersHorizontal className="size-4" />
       </Button>
-      <CreateSpaceDialog open={open} onOpenChange={setOpen} />
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent dir="rtl" className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-right">הגדרות</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Button className="w-full" onClick={() => { setInviteOpen(true); setOpen(false); }}>
+              <UserPlus className="size-4 ml-1" /> הזמן משתתפים
+            </Button>
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5"><Users className="size-4" /> נהל מרחבים</Label>
+              <div className="space-y-1 border rounded-lg p-2">
+                {spaces.map((s) => {
+                  const sc = spaceColorFor(s);
+                  return (
+                    <div key={s.id} className="flex items-center gap-1">
+                      <div className="flex-1 flex items-center gap-2 px-2 py-2 text-sm">
+                        {s.is_personal ? <User className="size-4 text-muted-foreground" /> : <span className={`size-2.5 rounded-full ${sc.dot}`} />}
+                        <span className="flex-1 truncate">{s.is_personal ? "אישי" : s.name}</span>
+                      </div>
+                      <button
+                        onClick={() => { setSpaceSettings(s); setOpen(false); }}
+                        aria-label="הגדרות מרחב"
+                        className="size-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted flex items-center justify-center"
+                      >
+                        <Settings className="size-3.5" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <Button variant="outline" className="w-full" onClick={onLogout}>
+              <LogOut className="size-4 ml-1" /> התנתק
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <CreateSpaceDialog open={inviteOpen} onOpenChange={setInviteOpen} />
+      {spaceSettings && (
+        <SpaceSettingsDialog
+          space={spaceSettings}
+          open={true}
+          onOpenChange={(v) => { if (!v) setSpaceSettings(null); }}
+        />
+      )}
     </>
   );
 }
