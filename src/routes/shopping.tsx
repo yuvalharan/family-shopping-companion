@@ -46,6 +46,7 @@ function ShoppingListsPage() {
   const [creating, setCreating] = useState(false);
   const [expandedHistory, setExpandedHistory] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ list: ShoppingList; isHistory: boolean } | null>(null);
+  const [savedOpen, setSavedOpen] = useState(false);
 
   const active = useMemo(() => lists.filter((l) => !l.is_completed), [lists]);
   const history = useMemo(
