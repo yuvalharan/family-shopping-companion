@@ -2,6 +2,7 @@ import { Outlet, Link, createRootRoute, HeadContent, Scripts, useNavigate, useLo
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { JoinInviteHandler } from "@/components/familycart/SpacesUI";
 
 import appCss from "../styles.css?url";
 
@@ -76,13 +77,19 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function AuthGate() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const isPublic = pathname === "/login" || pathname === "/signup";
 
   useEffect(() => {
     if (loading) return;
-    if (!user && !isPublic) navigate({ to: "/login" });
-  }, [user, loading, isPublic, navigate]);
+    if (!user && !isPublic) {
+      // Preserve invite code through login
+      const params = new URLSearchParams(typeof search === "string" ? search : "");
+      const code = params.get("invite");
+      if (code) { try { sessionStorage.setItem("pending-invite", code); } catch { /* ignore */ } }
+      navigate({ to: "/login" });
+    }
+  }, [user, loading, isPublic, navigate, search]);
 
   if (loading) return <div className="min-h-screen" />;
   if (!user && !isPublic) return <div className="min-h-screen" />;
@@ -93,7 +100,14 @@ function RootComponent() {
   return (
     <AuthProvider>
       <AuthGate />
+      <JoinInviteMount />
       <Toaster position="bottom-center" richColors />
     </AuthProvider>
   );
+}
+
+function JoinInviteMount() {
+  const { user } = useAuth();
+  if (!user) return null;
+  return <JoinInviteHandler />;
 }

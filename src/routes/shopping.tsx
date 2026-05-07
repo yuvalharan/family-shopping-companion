@@ -2,26 +2,19 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Plus, ShoppingCart, ChevronDown, Trash2, Bookmark } from "lucide-react";
 import { SavedListsDialog } from "@/components/familycart/SavedListsDialog";
+import { SpaceBadge } from "@/components/familycart/SpacesUI";
 import { formatQuantity } from "@/lib/units";
 import { AppHeader } from "@/components/familycart/AppHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
 import type { ShoppingList } from "@/lib/familycart-data";
@@ -39,14 +32,16 @@ export const Route = createFileRoute("/shopping")({
 });
 
 function ShoppingListsPage() {
-  const { lists, items, products, loading } = useFamilyCart();
+  const { lists, items, allProducts, loading, spaces, activeSpace } = useFamilyCart();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [newListSpaceId, setNewListSpaceId] = useState<string>("");
   const [creating, setCreating] = useState(false);
   const [expandedHistory, setExpandedHistory] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ list: ShoppingList; isHistory: boolean } | null>(null);
   const [savedOpen, setSavedOpen] = useState(false);
+  const products = allProducts;
 
   const active = useMemo(() => lists.filter((l) => !l.is_completed), [lists]);
   const history = useMemo(
@@ -91,14 +86,17 @@ function ShoppingListsPage() {
   const handleCreate = async () => {
     if (!name.trim()) return;
     setCreating(true);
-    const list = await actions.createShoppingList(name);
+    const list = await actions.createShoppingList(name, newListSpaceId || undefined);
     setCreating(false);
     if (list) {
       setOpen(false);
       setName("");
+      setNewListSpaceId("");
       navigate({ to: "/shopping/$listId", params: { listId: list.id } });
     }
   };
+
+  const spaceFor = (id: string) => spaces.find((s) => s.id === id);
 
   return (
     <div className="min-h-dvh bg-background">
@@ -145,7 +143,10 @@ function ShoppingListsPage() {
                       >
                         <div className="flex items-center justify-between gap-3">
                           <div className="min-w-0">
-                            <div className="font-semibold text-base truncate">{list.name}</div>
+                            <div className="flex items-center gap-2">
+                              <div className="font-semibold text-base truncate">{list.name}</div>
+                              {spaceFor(list.space_id) && <SpaceBadge space={spaceFor(list.space_id)!} />}
+                            </div>
                             <div className="text-sm text-muted-foreground mt-0.5">
                               {s.total} פריטים · {s.checked} בעגלה
                             </div>

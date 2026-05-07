@@ -1,0 +1,397 @@
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { Check, ChevronDown, Copy, Plus, Settings, User, Users, UserPlus, Trash2, LogOut } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription,
+} from "@/components/ui/alert-dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { actions, useFamilyCart } from "@/lib/familycart-store";
+import { spaceColorFor, type SharedSpace } from "@/lib/familycart-data";
+import { useAuth } from "@/lib/auth";
+
+export function SpaceBadge({ space }: { space: SharedSpace }) {
+  const c = spaceColorFor(space);
+  const label = space.is_personal ? "אישי" : space.name;
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${c.bg} ${c.text}`}>
+      {space.is_personal ? <User className="size-3" /> : <span className={`size-2 rounded-full ${c.dot}`} />}
+      {label}
+    </span>
+  );
+}
+
+export function SpaceSwitcher() {
+  const { spaces, activeSpace } = useFamilyCart();
+  const [open, setOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState<SharedSpace | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+
+  if (!activeSpace) return null;
+  const c = spaceColorFor(activeSpace);
+
+  return (
+    <>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium ${c.bg} ${c.text} hover:opacity-90 transition`}>
+            {activeSpace.is_personal ? <User className="size-3.5" /> : <span className={`size-2 rounded-full ${c.dot}`} />}
+            {activeSpace.is_personal ? "אישי" : activeSpace.name}
+            <ChevronDown className="size-3.5" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="end" dir="rtl" className="w-64 p-2">
+          <div className="text-xs text-muted-foreground px-2 py-1">המרחבים שלי</div>
+          {spaces.map((s) => {
+            const sc = spaceColorFor(s);
+            const isActive = s.id === activeSpace.id;
+            return (
+              <div key={s.id} className="flex items-center gap-1">
+                <button
+                  onClick={() => { actions.setActiveSpace(s.id); setOpen(false); }}
+                  className="flex-1 flex items-center gap-2 px-2 py-2 rounded-md hover:bg-muted text-right text-sm"
+                >
+                  {s.is_personal ? <User className="size-4 text-muted-foreground" /> : <span className={`size-2.5 rounded-full ${sc.dot}`} />}
+                  <span className="flex-1 truncate">{s.is_personal ? "אישי" : s.name}</span>
+                  {isActive && <Check className="size-4 text-primary" />}
+                </button>
+                <button
+                  onClick={() => { setSettingsOpen(s); setOpen(false); }}
+                  aria-label="הגדרות"
+                  className="size-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted flex items-center justify-center"
+                >
+                  <Settings className="size-3.5" />
+                </button>
+              </div>
+            );
+          })}
+          <div className="border-t mt-2 pt-2">
+            <button
+              onClick={() => { setCreateOpen(true); setOpen(false); }}
+              className="w-full flex items-center gap-2 px-2 py-2 rounded-md hover:bg-muted text-right text-sm text-primary"
+            >
+              <UserPlus className="size-4" />
+              צור מרחב חדש והזמן
+            </button>
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      <CreateSpaceDialog open={createOpen} onOpenChange={setCreateOpen} />
+      {settingsOpen && (
+        <SpaceSettingsDialog
+          space={settingsOpen}
+          open={true}
+          onOpenChange={(v) => { if (!v) setSettingsOpen(null); }}
+        />
+      )}
+    </>
+  );
+}
+
+export function InviteHeaderButton() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button size="sm" variant="ghost" onClick={() => setOpen(true)}>
+        <UserPlus className="size-4 ml-1" />
+        הזמן משתתפים
+      </Button>
+      <CreateSpaceDialog open={open} onOpenChange={setOpen} />
+    </>
+  );
+}
+
+function CreateSpaceDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+  const [name, setName] = useState("");
+  const [created, setCreated] = useState<SharedSpace | null>(null);
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!open) { setName(""); setCreated(null); setInviteUrl(null); }
+  }, [open]);
+
+  const submit = async () => {
+    if (!name.trim()) return;
+    setBusy(true);
+    const space = await actions.createSpace(name);
+    if (space) {
+      setCreated(space);
+      const invite = await actions.createInvite(space.id);
+      if (invite) setInviteUrl(`${window.location.origin}/?invite=${invite.invite_code}`);
+    }
+    setBusy(false);
+  };
+
+  const copy = () => {
+    if (!inviteUrl) return;
+    navigator.clipboard.writeText(inviteUrl);
+    toast.success("הקישור הועתק");
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent dir="rtl" className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-right">{created ? "המרחב נוצר!" : "מרחב משותף חדש"}</DialogTitle>
+        </DialogHeader>
+        {created ? (
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">שתף את הקישור הבא — תקף 7 ימים</p>
+            <div className="flex gap-2">
+              <Input value={inviteUrl ?? ""} readOnly className="text-xs" />
+              <Button size="icon" onClick={copy}><Copy className="size-4" /></Button>
+            </div>
+            <Button className="w-full" onClick={() => onOpenChange(false)}>סיום</Button>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-2">
+              <Label>שם המרחב</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="למשל: משפחת כהן" autoFocus
+                onKeyDown={(e) => { if (e.key === "Enter") submit(); }} />
+            </div>
+            <DialogFooter className="sm:justify-start gap-2">
+              <Button onClick={submit} disabled={!name.trim() || busy}>צור והזמן</Button>
+              <Button variant="ghost" onClick={() => onOpenChange(false)}>ביטול</Button>
+            </DialogFooter>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SpaceSettingsDialog({ space, open, onOpenChange }: { space: SharedSpace; open: boolean; onOpenChange: (v: boolean) => void }) {
+  const { user } = useAuth();
+  const { invites } = useFamilyCart();
+  const [name, setName] = useState(space.name);
+  const [members, setMembers] = useState<Array<{ user_id: string; email: string; is_owner: boolean }>>([]);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
+  const isOwner = !!user && user.id === space.owner_id;
+
+  const activeInvite = useMemo(() => {
+    return invites.filter((i) => i.space_id === space.id && new Date(i.expires_at) > new Date())[0] ?? null;
+  }, [invites, space.id]);
+
+  useEffect(() => {
+    if (open) actions.getSpaceMembers(space.id).then(setMembers);
+  }, [open, space.id]);
+
+  const inviteUrl = activeInvite ? `${window.location.origin}/?invite=${activeInvite.invite_code}` : null;
+
+  const copy = () => {
+    if (!inviteUrl) return;
+    navigator.clipboard.writeText(inviteUrl);
+    toast.success("הקישור הועתק");
+  };
+
+  const generate = async () => {
+    const inv = await actions.createInvite(space.id);
+    if (inv) toast.success("נוצר קישור חדש");
+  };
+
+  const formatExp = (iso: string) => new Intl.DateTimeFormat("he-IL", { day: "numeric", month: "long" }).format(new Date(iso));
+
+  return (
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent dir="rtl" className="max-w-md max-h-[85dvh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-right">הגדרות מרחב</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>שם</Label>
+              {space.is_personal ? (
+                <Input value="אישי" readOnly disabled />
+              ) : (
+                <div className="flex gap-2">
+                  <Input value={name} onChange={(e) => setName(e.target.value)} disabled={!isOwner} />
+                  {isOwner && (
+                    <Button onClick={() => actions.renameSpace(space.id, name)} disabled={!name.trim() || name === space.name}>שמור</Button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5"><Users className="size-4" /> משתתפים ({members.length})</Label>
+              <div className="space-y-1 border rounded-lg p-2">
+                {members.map((m) => (
+                  <div key={m.user_id} className="flex items-center justify-between text-sm py-1">
+                    <span className="truncate">{m.email}</span>
+                    {m.is_owner && <span className="text-xs text-muted-foreground">בעלים</span>}
+                  </div>
+                ))}
+                {members.length === 0 && <div className="text-xs text-muted-foreground py-1">טוען...</div>}
+              </div>
+            </div>
+
+            {!space.is_personal && (
+              <div className="space-y-2">
+                <Label>קישור הזמנה</Label>
+                {inviteUrl ? (
+                  <>
+                    <div className="flex gap-2">
+                      <Input value={inviteUrl} readOnly className="text-xs" />
+                      <Button size="icon" onClick={copy}><Copy className="size-4" /></Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">פג תוקף ב-{formatExp(activeInvite!.expires_at)}</p>
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">אין קישור פעיל</p>
+                )}
+                <Button variant="outline" size="sm" onClick={generate} className="w-full">
+                  צור קישור חדש
+                </Button>
+              </div>
+            )}
+
+            {!space.is_personal && (
+              <div className="border-t pt-3 space-y-2">
+                {isOwner ? (
+                  <Button variant="destructive" className="w-full" onClick={() => setConfirmDelete(true)}>
+                    <Trash2 className="size-4 ml-1" /> מחק מרחב
+                  </Button>
+                ) : (
+                  <Button variant="outline" className="w-full" onClick={() => setConfirmLeave(true)}>
+                    <LogOut className="size-4 ml-1" /> צא מהמרחב
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-right">למחוק את המרחב?</AlertDialogTitle>
+            <AlertDialogDescription className="text-right">
+              כל הנתונים במרחב יימחקו. לא ניתן לבטל.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-start gap-2">
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => { await actions.deleteSpace(space.id); onOpenChange(false); }}
+            >מחק</AlertDialogAction>
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmLeave} onOpenChange={setConfirmLeave}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-right">לצאת מהמרחב?</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-start gap-2">
+            <AlertDialogAction
+              onClick={async () => { await actions.leaveSpace(space.id); onOpenChange(false); }}
+            >צא</AlertDialogAction>
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
+export function JoinInviteHandler() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const router = useRouterState();
+  const search = router.location.search;
+  const [code, setCode] = useState<string | null>(null);
+  const [info, setInfo] = useState<{ space_id: string; space_name: string; expires_at: string; already_member: boolean } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
+    const c = params.get("invite");
+    if (c) setCode(c);
+  }, [search]);
+
+  useEffect(() => {
+    if (code) actions.getInviteInfo(code).then(setInfo);
+  }, [code]);
+
+  const close = () => {
+    setCode(null); setInfo(null); setError(null);
+    try { window.history.replaceState({}, "", window.location.pathname); } catch { /* ignore */ }
+  };
+
+  const join = async () => {
+    if (!code) return;
+    if (!user) {
+      // remember code & go to login
+      try { sessionStorage.setItem("pending-invite", code); } catch { /* ignore */ }
+      navigate({ to: "/login" });
+      return;
+    }
+    setBusy(true);
+    const res = await actions.acceptInvite(code);
+    setBusy(false);
+    if (!res.ok) { setError(res.error); return; }
+    actions.setActiveSpace(res.spaceId);
+    toast.success("הצטרפת למרחב!");
+    close();
+  };
+
+  // After login, auto-pick up pending invite
+  useEffect(() => {
+    if (!user) return;
+    try {
+      const pending = sessionStorage.getItem("pending-invite");
+      if (pending && !code) { sessionStorage.removeItem("pending-invite"); setCode(pending); }
+    } catch { /* ignore */ }
+  }, [user, code]);
+
+  if (!code) return null;
+
+  return (
+    <Dialog open={true} onOpenChange={(v) => { if (!v) close(); }}>
+      <DialogContent dir="rtl" className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-right">הזמנה למרחב משותף</DialogTitle>
+        </DialogHeader>
+        {!info ? (
+          <p className="text-sm text-muted-foreground">טוען...</p>
+        ) : info.already_member ? (
+          <div className="space-y-3">
+            <p>אתה כבר חבר ב-{info.space_name}</p>
+            <Button className="w-full" onClick={() => { actions.setActiveSpace(info.space_id); close(); }}>פתח</Button>
+          </div>
+        ) : new Date(info.expires_at) < new Date() ? (
+          <div className="space-y-3">
+            <p className="text-destructive">ההזמנה פגה</p>
+            <Button className="w-full" variant="outline" onClick={close}>סגור</Button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p>הוזמנת להצטרף ל-<strong>{info.space_name}</strong></p>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Button className="w-full" onClick={join} disabled={busy}>
+              <Plus className="size-4 ml-1" />
+              {user ? `הצטרף ל${info.space_name}` : "התחבר והצטרף"}
+            </Button>
+            <Button variant="ghost" className="w-full" onClick={close}>אולי אחר כך</Button>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}

@@ -19,18 +19,21 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          space_id: string
           user_id: string | null
         }
         Insert: {
           created_at?: string
           id?: string
           name: string
+          space_id: string
           user_id?: string | null
         }
         Update: {
           created_at?: string
           id?: string
           name?: string
+          space_id?: string
           user_id?: string | null
         }
         Relationships: []
@@ -42,6 +45,7 @@ export type Database = {
           default_quantity: number
           id: string
           name: string
+          space_id: string
           unit: string
           user_id: string | null
         }
@@ -51,6 +55,7 @@ export type Database = {
           default_quantity?: number
           id?: string
           name: string
+          space_id: string
           unit: string
           user_id?: string | null
         }
@@ -60,6 +65,7 @@ export type Database = {
           default_quantity?: number
           id?: string
           name?: string
+          space_id?: string
           unit?: string
           user_id?: string | null
         }
@@ -72,6 +78,7 @@ export type Database = {
           product_id: string
           quantity_needed: number
           saved_list_id: string
+          space_id: string
           user_id: string | null
         }
         Insert: {
@@ -80,6 +87,7 @@ export type Database = {
           product_id: string
           quantity_needed?: number
           saved_list_id: string
+          space_id: string
           user_id?: string | null
         }
         Update: {
@@ -88,6 +96,7 @@ export type Database = {
           product_id?: string
           quantity_needed?: number
           saved_list_id?: string
+          space_id?: string
           user_id?: string | null
         }
         Relationships: [
@@ -112,19 +121,49 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          space_id: string
           user_id: string | null
         }
         Insert: {
           created_at?: string
           id?: string
           name: string
+          space_id: string
           user_id?: string | null
         }
         Update: {
           created_at?: string
           id?: string
           name?: string
+          space_id?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      shared_spaces: {
+        Row: {
+          color_index: number
+          created_at: string
+          id: string
+          is_personal: boolean
+          name: string
+          owner_id: string
+        }
+        Insert: {
+          color_index?: number
+          created_at?: string
+          id?: string
+          is_personal?: boolean
+          name: string
+          owner_id: string
+        }
+        Update: {
+          color_index?: number
+          created_at?: string
+          id?: string
+          is_personal?: boolean
+          name?: string
+          owner_id?: string
         }
         Relationships: []
       }
@@ -137,6 +176,7 @@ export type Database = {
           product_id: string
           quantity_needed: number
           shopping_list_id: string
+          space_id: string
           user_id: string | null
         }
         Insert: {
@@ -147,6 +187,7 @@ export type Database = {
           product_id: string
           quantity_needed?: number
           shopping_list_id: string
+          space_id: string
           user_id?: string | null
         }
         Update: {
@@ -157,6 +198,7 @@ export type Database = {
           product_id?: string
           quantity_needed?: number
           shopping_list_id?: string
+          space_id?: string
           user_id?: string | null
         }
         Relationships: [
@@ -183,6 +225,7 @@ export type Database = {
           id: string
           is_completed: boolean
           name: string
+          space_id: string
           user_id: string | null
         }
         Insert: {
@@ -191,6 +234,7 @@ export type Database = {
           id?: string
           is_completed?: boolean
           name: string
+          space_id: string
           user_id?: string | null
         }
         Update: {
@@ -199,16 +243,100 @@ export type Database = {
           id?: string
           is_completed?: boolean
           name?: string
+          space_id?: string
           user_id?: string | null
         }
         Relationships: []
+      }
+      space_invites: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          invite_code: string
+          space_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invite_code: string
+          space_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invite_code?: string
+          space_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "space_invites_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "shared_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      space_members: {
+        Row: {
+          id: string
+          joined_at: string
+          space_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          space_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          space_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "space_members_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "shared_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      accept_invite: { Args: { _code: string }; Returns: string }
+      get_invite_space: {
+        Args: { _code: string }
+        Returns: {
+          already_member: boolean
+          expires_at: string
+          space_id: string
+          space_name: string
+        }[]
+      }
+      get_space_members: {
+        Args: { _space_id: string }
+        Returns: {
+          email: string
+          is_owner: boolean
+          joined_at: string
+          user_id: string
+        }[]
+      }
+      is_space_member: {
+        Args: { _space_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
