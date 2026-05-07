@@ -55,3 +55,17 @@ export type ShoppingItem = {
   notes?: string | null;
   created_at?: string;
 };
+
+export type SavedList = {
+  id: string;
+  name: string;
+  created_at?: string;
+};
+
+export type SavedListItem = {
+  id: string;
+  saved_list_id: string;
+  product_id: string;
+  quantity_needed: number;
+  created_at?: string;
+};
