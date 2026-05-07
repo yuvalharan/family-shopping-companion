@@ -86,14 +86,17 @@ function ShoppingListsPage() {
   const handleCreate = async () => {
     if (!name.trim()) return;
     setCreating(true);
-    const list = await actions.createShoppingList(name);
+    const list = await actions.createShoppingList(name, newListSpaceId || undefined);
     setCreating(false);
     if (list) {
       setOpen(false);
       setName("");
+      setNewListSpaceId("");
       navigate({ to: "/shopping/$listId", params: { listId: list.id } });
     }
   };
+
+  const spaceFor = (id: string) => spaces.find((s) => s.id === id);
 
   return (
     <div className="min-h-dvh bg-background">
