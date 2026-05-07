@@ -2,6 +2,7 @@ import { Outlet, Link, createRootRoute, HeadContent, Scripts, useNavigate, useLo
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { JoinInviteHandler } from "@/components/familycart/SpacesUI";
 
 import appCss from "../styles.css?url";
 
