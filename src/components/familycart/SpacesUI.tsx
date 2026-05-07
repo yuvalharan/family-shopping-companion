@@ -105,6 +105,7 @@ export function SettingsPanelButton() {
   const [open, setOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [spaceSettings, setSpaceSettings] = useState<SharedSpace | null>(null);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
   const { spaces } = useFamilyCart();
   const navigate = useNavigate();
 
