@@ -9,6 +9,8 @@ type State = {
   items: ShoppingItem[];
   lists: ShoppingList[];
   categories: string[];
+  savedLists: SavedList[];
+  savedItems: SavedListItem[];
   loading: boolean;
 };
 
@@ -17,6 +19,8 @@ let state: State = {
   items: [],
   lists: [],
   categories: [],
+  savedLists: [],
+  savedItems: [],
   loading: true,
 };
 
