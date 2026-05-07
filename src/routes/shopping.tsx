@@ -32,14 +32,16 @@ export const Route = createFileRoute("/shopping")({
 });
 
 function ShoppingListsPage() {
-  const { lists, items, products, loading } = useFamilyCart();
+  const { lists, items, allProducts, loading, spaces, activeSpace } = useFamilyCart();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [newListSpaceId, setNewListSpaceId] = useState<string>("");
   const [creating, setCreating] = useState(false);
   const [expandedHistory, setExpandedHistory] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ list: ShoppingList; isHistory: boolean } | null>(null);
   const [savedOpen, setSavedOpen] = useState(false);
+  const products = allProducts;
 
   const active = useMemo(() => lists.filter((l) => !l.is_completed), [lists]);
   const history = useMemo(
