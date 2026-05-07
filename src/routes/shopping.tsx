@@ -43,17 +43,21 @@ function ShoppingListsPage() {
   const [savedOpen, setSavedOpen] = useState(false);
   const products = allProducts;
 
-  const active = useMemo(() => lists.filter((l) => !l.is_completed), [lists]);
+  const spaceLists = useMemo(
+    () => (activeSpace ? lists.filter((l) => l.space_id === activeSpace.id) : []),
+    [lists, activeSpace],
+  );
+  const active = useMemo(() => spaceLists.filter((l) => !l.is_completed), [spaceLists]);
   const history = useMemo(
     () =>
-      lists
+      spaceLists
         .filter((l) => l.is_completed)
         .sort((a, b) => {
           const da = new Date(a.completed_at ?? a.created_at ?? 0).getTime();
           const db = new Date(b.completed_at ?? b.created_at ?? 0).getTime();
           return db - da;
         }),
-    [lists],
+    [spaceLists],
   );
 
   const stats = (listId: string) => {
