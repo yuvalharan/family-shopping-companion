@@ -110,13 +110,22 @@ export function InviteHeaderButton() {
 }
 
 function CreateSpaceDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+  const { spaces } = useFamilyCart();
+  const personal = spaces.find((s) => s.is_personal);
+  const [step, setStep] = useState<"name" | "copy" | "done">("name");
   const [name, setName] = useState("");
+  const [copyProducts, setCopyProducts] = useState(true);
+  const [copyActive, setCopyActive] = useState(false);
+  const [copySaved, setCopySaved] = useState(false);
   const [created, setCreated] = useState<SharedSpace | null>(null);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!open) { setName(""); setCreated(null); setInviteUrl(null); }
+    if (!open) {
+      setStep("name"); setName(""); setCopyProducts(true); setCopyActive(false);
+      setCopySaved(false); setCreated(null); setInviteUrl(null);
+    }
   }, [open]);
 
   const submit = async () => {
@@ -124,9 +133,15 @@ function CreateSpaceDialog({ open, onOpenChange }: { open: boolean; onOpenChange
     setBusy(true);
     const space = await actions.createSpace(name);
     if (space) {
+      if (personal && (copyProducts || copyActive || copySaved)) {
+        await actions.copyDataBetweenSpaces(personal.id, space.id, {
+          products: copyProducts, activeLists: copyActive, savedLists: copySaved,
+        });
+      }
       setCreated(space);
       const invite = await actions.createInvite(space.id);
       if (invite) setInviteUrl(`${window.location.origin}/?invite=${invite.invite_code}`);
+      setStep("done");
     }
     setBusy(false);
   };
@@ -141,9 +156,11 @@ function CreateSpaceDialog({ open, onOpenChange }: { open: boolean; onOpenChange
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent dir="rtl" className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-right">{created ? "המרחב נוצר!" : "מרחב משותף חדש"}</DialogTitle>
+          <DialogTitle className="text-right">
+            {step === "done" ? "המרחב נוצר!" : step === "copy" ? "שכפול נתונים" : "מרחב משותף חדש"}
+          </DialogTitle>
         </DialogHeader>
-        {created ? (
+        {step === "done" ? (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">שתף את הקישור הבא — תקף 7 ימים</p>
             <div className="flex gap-2">
@@ -152,21 +169,43 @@ function CreateSpaceDialog({ open, onOpenChange }: { open: boolean; onOpenChange
             </div>
             <Button className="w-full" onClick={() => onOpenChange(false)}>סיום</Button>
           </div>
+        ) : step === "copy" ? (
+          <>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">האם לשכפל נתונים מהמרחב האישי?</p>
+              <ToggleRow label="רשימה ראשית (מוצרים וקטגוריות)" checked={copyProducts} onChange={setCopyProducts} />
+              <ToggleRow label="רשימות קנייה פעילות" checked={copyActive} onChange={setCopyActive} />
+              <ToggleRow label="רשימות שמורות" checked={copySaved} onChange={setCopySaved} />
+            </div>
+            <DialogFooter className="sm:justify-start gap-2">
+              <Button onClick={submit} disabled={busy}>צור מרחב</Button>
+              <Button variant="ghost" onClick={() => setStep("name")}>חזרה</Button>
+            </DialogFooter>
+          </>
         ) : (
           <>
             <div className="space-y-2">
               <Label>שם המרחב</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="למשל: משפחת כהן" autoFocus
-                onKeyDown={(e) => { if (e.key === "Enter") submit(); }} />
+                onKeyDown={(e) => { if (e.key === "Enter" && name.trim()) setStep("copy"); }} />
             </div>
             <DialogFooter className="sm:justify-start gap-2">
-              <Button onClick={submit} disabled={!name.trim() || busy}>צור והזמן</Button>
+              <Button onClick={() => setStep("copy")} disabled={!name.trim()}>הבא</Button>
               <Button variant="ghost" onClick={() => onOpenChange(false)}>ביטול</Button>
             </DialogFooter>
           </>
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ToggleRow({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex items-center justify-between gap-3 p-3 rounded-lg border cursor-pointer">
+      <span className="text-sm">{label}</span>
+      <Switch checked={checked} onCheckedChange={onChange} />
+    </label>
   );
 }
 
