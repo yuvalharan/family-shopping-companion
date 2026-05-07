@@ -93,11 +93,6 @@ function MasterListPage() {
     }));
   }, [products, categories, search, activeCat]);
 
-  const totalMatches = useMemo(
-    () => grouped.reduce((sum, g) => sum + g.products.length, 0),
-    [grouped],
-  );
-
   const isFiltering = search.trim().length > 0 || activeCat !== "__all__";
   const isEmpty = !loading && products.length === 0;
 
