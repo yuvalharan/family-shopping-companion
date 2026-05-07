@@ -344,7 +344,16 @@ function SpaceSettingsDialog({ space, open, onOpenChange }: { space: SharedSpace
                       <Input value={inviteUrl} readOnly className="text-xs" />
                       <Button size="icon" onClick={copy}><Copy className="size-4" /></Button>
                     </div>
-                    <p className="text-xs text-muted-foreground">פג תוקף ב-{formatExp(activeInvite!.expires_at)}</p>
+                    {(() => {
+                      const exp = new Date(activeInvite!.expires_at);
+                      const hoursLeft = (exp.getTime() - Date.now()) / 36e5;
+                      const urgent = hoursLeft < 24;
+                      return (
+                        <p className={"text-xs " + (urgent ? "text-destructive font-medium" : "text-muted-foreground")}>
+                          פג תוקף ב: {formatExp(activeInvite!.expires_at)}
+                        </p>
+                      );
+                    })()}
                   </>
                 ) : (
                   <p className="text-xs text-muted-foreground">אין קישור פעיל</p>
