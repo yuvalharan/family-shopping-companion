@@ -286,6 +286,8 @@ function ShoppingListsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <SavedListsDialog open={savedOpen} onOpenChange={setSavedOpen} />
     </div>
   );
 }
