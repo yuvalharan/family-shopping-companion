@@ -12,7 +12,9 @@
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\yuval\\\\OneDrive\\\\Desktop\\\\vibe-coding\\\\shopping-app\\\\family-shopping-companion\" -Recurse -Directory)",
       "Bash(Get-Content \"C:\\\\Users\\\\yuval\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-yuval-OneDrive-Desktop-vibe-coding-shopping-app-family-shopping-companion\\\\87075f52-2c43-4578-b363-5a109e151c2b\\\\tasks\\\\br3wrpmrz.output\" -Wait)",
       "Bash(Select-String -Pattern \"ready|error|Local|Network|VITE\" --SimpleMatch)",
-      "Bash(npx supabase *)"
+      "Bash(npx supabase *)",
+      "Bash(Get-ChildItem -Path C:\\\\Users\\\\yuval\\\\OneDrive\\\\Desktop\\\\vibe-coding\\\\shopping-app\\\\family-shopping-companion -Recurse -Name -Include *supabase* -ErrorAction SilentlyContinue)",
+      "Bash(Select-Object -First 50)"
     ]
   }
 }
