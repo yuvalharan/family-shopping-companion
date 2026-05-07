@@ -143,11 +143,13 @@ let loadingPromise: Promise<void> | null = null;
 let currentUserId: string | null = null;
 
 async function loadAll() {
-  const [productsRes, itemsRes, listsRes, categoriesRes] = await Promise.all([
+  const [productsRes, itemsRes, listsRes, categoriesRes, savedListsRes, savedItemsRes] = await Promise.all([
     supabase.from("products").select("*").order("created_at", { ascending: true }),
     supabase.from("shopping_items").select("*").order("created_at", { ascending: true }),
     supabase.from("shopping_lists").select("*").order("created_at", { ascending: false }),
     supabase.from("categories").select("name").order("created_at", { ascending: true }),
+    supabase.from("saved_lists").select("*").order("created_at", { ascending: false }),
+    supabase.from("saved_list_items").select("*").order("created_at", { ascending: true }),
   ]);
   const dbCategories = ((categoriesRes.data ?? []) as Array<{ name: string }>).map((r) => r.name);
   state = {
@@ -155,6 +157,8 @@ async function loadAll() {
     items: (itemsRes.data ?? []) as unknown as ShoppingItem[],
     lists: (listsRes.data ?? []) as unknown as ShoppingList[],
     categories: [...new Set([...CATEGORIES, ...dbCategories])],
+    savedLists: (savedListsRes.data ?? []) as unknown as SavedList[],
+    savedItems: (savedItemsRes.data ?? []) as unknown as SavedListItem[],
     loading: false,
   };
   emit();
