@@ -65,6 +65,69 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_list_items: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          quantity_needed: number
+          saved_list_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          quantity_needed?: number
+          saved_list_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          quantity_needed?: number
+          saved_list_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_list_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_list_items_saved_list_id_fkey"
+            columns: ["saved_list_id"]
+            isOneToOne: false
+            referencedRelation: "saved_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_lists: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       shopping_items: {
         Row: {
           created_at: string
