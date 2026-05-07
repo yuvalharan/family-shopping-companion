@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { Check, ChevronDown, Copy, Plus, Settings, User, Users, UserPlus, Trash2, LogOut, SlidersHorizontal } from "lucide-react";
+import { Check, ChevronDown, Copy, Plus, Settings, User, Users, UserPlus, Trash2, LogOut, SlidersHorizontal, Tags } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { ManageCategoriesDialog } from "@/components/familycart/ManageCategoriesDialog";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -104,6 +105,7 @@ export function SettingsPanelButton() {
   const [open, setOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [spaceSettings, setSpaceSettings] = useState<SharedSpace | null>(null);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
   const { spaces } = useFamilyCart();
   const navigate = useNavigate();
 
@@ -150,6 +152,9 @@ export function SettingsPanelButton() {
                 })}
               </div>
             </div>
+            <Button variant="outline" className="w-full" onClick={() => { setCategoriesOpen(true); setOpen(false); }}>
+              <Tags className="size-4 ml-1" /> נהל קטגוריות
+            </Button>
             <Button variant="outline" className="w-full" onClick={onLogout}>
               <LogOut className="size-4 ml-1" /> התנתק
             </Button>
@@ -157,6 +162,7 @@ export function SettingsPanelButton() {
         </DialogContent>
       </Dialog>
       <CreateSpaceDialog open={inviteOpen} onOpenChange={setInviteOpen} />
+      <ManageCategoriesDialog open={categoriesOpen} onOpenChange={setCategoriesOpen} />
       {spaceSettings && (
         <SpaceSettingsDialog
           space={spaceSettings}

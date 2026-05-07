@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Pencil, Trash2, Settings2, Search, X, Plus, ShoppingCart, PackagePlus, CirclePlus, Download } from "lucide-react";
+import { Pencil, Trash2, Search, X, Plus, ShoppingCart, PackagePlus, CirclePlus, Download } from "lucide-react";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/familycart/AppHeader";
 import { AddProductDialog } from "@/components/familycart/AddProductDialog";
-import { ManageCategoriesDialog } from "@/components/familycart/ManageCategoriesDialog";
+
 import { ImportProductsDialog } from "@/components/familycart/ImportProductsDialog";
 import { ProductAutocomplete, type ProductSuggestion } from "@/components/familycart/ProductAutocomplete";
 import { Input } from "@/components/ui/input";
@@ -44,7 +44,7 @@ function MasterListPage() {
   const { user } = useAuth();
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
-  const [manageOpen, setManageOpen] = useState(false);
+  
   const [addOpen, setAddOpen] = useState(false);
   const [prefill, setPrefill] = useState<ProductSuggestion | null>(null);
   const [importOpen, setImportOpen] = useState(false);
@@ -116,13 +116,6 @@ function MasterListPage() {
               >
                 <Download className="size-4" />
                 ייבא מוצרים נפוצים
-              </button>
-              <button
-                onClick={() => setManageOpen(true)}
-                className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Settings2 className="size-4" />
-                נהל קטגוריות
               </button>
             </div>
 
@@ -260,7 +253,7 @@ function MasterListPage() {
           onOpenChange={(v) => { if (!v) setEditProduct(null); }}
         />
       )}
-      <ManageCategoriesDialog open={manageOpen} onOpenChange={setManageOpen} />
+      
       <ImportProductsDialog open={importOpen} onOpenChange={setImportOpen} />
       <ImportProductsDialog
         open={setupOpen}
