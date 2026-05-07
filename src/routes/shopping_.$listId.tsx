@@ -70,6 +70,7 @@ function ShoppingListDetailPage() {
   const [nameDraft, setNameDraft] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmOverwrite, setConfirmOverwrite] = useState<string | null>(null);
 
   if (loading) {
     return (
