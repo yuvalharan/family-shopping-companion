@@ -118,7 +118,7 @@ export function SettingsPanelButton() {
   return (
     <>
       <Button size="sm" variant="ghost" onClick={() => setOpen(true)} aria-label="הגדרות">
-        <SlidersHorizontal className="size-4" />
+        <Settings className="size-4" />
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent dir="rtl" className="max-w-md">
