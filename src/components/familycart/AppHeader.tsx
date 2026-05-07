@@ -9,7 +9,6 @@ export function AppHeader() {
   const tabs = [
     { to: "/", label: "רשימה ראשית" },
     { to: "/shopping", label: "רשימות קנייה" },
-    { to: "/templates", label: "תבניות" },
   ] as const;
 
   const onLogout = async () => {

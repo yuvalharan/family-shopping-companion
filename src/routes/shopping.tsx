@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus, ShoppingCart, ChevronDown, Trash2 } from "lucide-react";
+import { Plus, ShoppingCart, ChevronDown, Trash2, Bookmark } from "lucide-react";
+import { SavedListsDialog } from "@/components/familycart/SavedListsDialog";
 import { formatQuantity } from "@/lib/units";
 import { AppHeader } from "@/components/familycart/AppHeader";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ function ShoppingListsPage() {
   const [creating, setCreating] = useState(false);
   const [expandedHistory, setExpandedHistory] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ list: ShoppingList; isHistory: boolean } | null>(null);
+  const [savedOpen, setSavedOpen] = useState(false);
 
   const active = useMemo(() => lists.filter((l) => !l.is_completed), [lists]);
   const history = useMemo(
@@ -102,6 +104,14 @@ function ShoppingListsPage() {
     <div className="min-h-dvh bg-background">
       <AppHeader />
       <main className="mx-auto max-w-xl px-4 py-6 pb-32 space-y-6">
+        <Button
+          variant="outline"
+          className="w-full h-12 rounded-2xl"
+          onClick={() => setSavedOpen(true)}
+        >
+          <Bookmark className="size-5 ms-2" />
+          רשימות שמורות
+        </Button>
         {loading ? (
           <p className="text-center text-muted-foreground mt-12">טוען רשימות...</p>
         ) : (
@@ -276,6 +286,8 @@ function ShoppingListsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <SavedListsDialog open={savedOpen} onOpenChange={setSavedOpen} />
     </div>
   );
 }

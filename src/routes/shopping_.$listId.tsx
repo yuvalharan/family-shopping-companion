@@ -193,7 +193,7 @@ function ShoppingListDetailPage() {
             disabled={listItems.length === 0}
           >
             <Bookmark className="size-5 ms-2" />
-            שמור כתבנית
+            שמור רשימה
           </Button>
         </div>
 
