@@ -313,15 +313,21 @@ export function JoinInviteHandler() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const router = useRouterState();
-  const search = router.location.search;
+  const search = router.location.search as unknown;
   const [code, setCode] = useState<string | null>(null);
   const [info, setInfo] = useState<{ space_id: string; space_name: string; expires_at: string; already_member: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
-    const c = params.get("invite");
+    let c: string | null = null;
+    if (typeof search === "string") {
+      const s = search.startsWith("?") ? search.slice(1) : search;
+      c = new URLSearchParams(s).get("invite");
+    } else if (search && typeof search === "object") {
+      const v = (search as Record<string, unknown>).invite;
+      if (typeof v === "string") c = v;
+    }
     if (c) setCode(c);
   }, [search]);
 

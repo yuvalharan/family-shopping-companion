@@ -84,8 +84,15 @@ function AuthGate() {
     if (loading) return;
     if (!user && !isPublic) {
       // Preserve invite code through login
-      const params = new URLSearchParams(typeof search === "string" ? search : "");
-      const code = params.get("invite");
+      const raw: unknown = search;
+      let code: string | null = null;
+      if (typeof raw === "string") {
+        const s = raw.startsWith("?") ? raw.slice(1) : raw;
+        code = new URLSearchParams(s).get("invite");
+      } else if (raw && typeof raw === "object") {
+        const v = (raw as Record<string, unknown>).invite;
+        if (typeof v === "string") code = v;
+      }
       if (code) { try { sessionStorage.setItem("pending-invite", code); } catch { /* ignore */ } }
       navigate({ to: "/login" });
     }
