@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Pencil, Trash2, Settings2, Search, X, Plus, ShoppingCart, PackagePlus, CirclePlus, Download, Sparkles, Loader2 } from "lucide-react";
+import { Pencil, Trash2, Settings2, Search, X, Plus, ShoppingCart, PackagePlus, CirclePlus, Download } from "lucide-react";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/familycart/AppHeader";
 import { AddProductDialog } from "@/components/familycart/AddProductDialog";
 import { ManageCategoriesDialog } from "@/components/familycart/ManageCategoriesDialog";
 import { ImportProductsDialog } from "@/components/familycart/ImportProductsDialog";
+import { ProductAutocomplete, type ProductSuggestion } from "@/components/familycart/ProductAutocomplete";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -24,9 +25,6 @@ import { type Product, type Unit } from "@/lib/familycart-data";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
 import { formatQuantity } from "@/lib/units";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/integrations/supabase/client";
-
-type AiSuggestion = { name: string; category: string; default_quantity: number; unit: Unit };
 
 
 export const Route = createFileRoute("/")({
@@ -48,7 +46,7 @@ function MasterListPage() {
   const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
   const [manageOpen, setManageOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
-  const [aiPrefill, setAiPrefill] = useState<AiSuggestion | null>(null);
+  const [prefill, setPrefill] = useState<ProductSuggestion | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [setupOpen, setSetupOpen] = useState(false);
   const setupShownRef = useRef(false);
@@ -56,9 +54,6 @@ function MasterListPage() {
   const [search, setSearch] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const [activeCat, setActiveCat] = useState<string>("__all__");
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiSuggestion, setAiSuggestion] = useState<AiSuggestion | null>(null);
-  const [aiQuery, setAiQuery] = useState("");
 
 
   useEffect(() => {
@@ -103,58 +98,12 @@ function MasterListPage() {
     [grouped],
   );
 
-  const trimmedSearch = search.trim();
-
-  useEffect(() => {
-    if (!searchFocused) return;
-    if (trimmedSearch.length < 2) {
-      setAiSuggestion(null);
-      return;
-    }
-    if (totalMatches > 0) {
-      setAiSuggestion(null);
-      return;
-    }
-    if (aiSuggestion && aiQuery === trimmedSearch) return;
-
-    let cancelled = false;
-    setAiLoading(true);
-    (async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke("ai-product-search", {
-          body: { query: trimmedSearch },
-        });
-        if (cancelled) return;
-        if (error) throw error;
-        if (data?.error) {
-          if (data.error.includes("קרדיטים") || data.error.includes("בקשות")) {
-            toast.error(data.error);
-          }
-          return;
-        }
-        if (data?.name && data?.category && data?.unit) {
-          setAiSuggestion(data as AiSuggestion);
-          setAiQuery(trimmedSearch);
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        if (!cancelled) setAiLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [trimmedSearch, totalMatches, searchFocused]);
-
   const isFiltering = search.trim().length > 0 || activeCat !== "__all__";
   const isEmpty = !loading && products.length === 0;
 
-  const showSearchDropdown = searchFocused && trimmedSearch.length > 0 && totalMatches === 0 &&
-    (aiLoading || aiSuggestion);
-
-  const openAddWithPrefill = (s: AiSuggestion) => {
-    setAiPrefill(s);
+  const openAddWithPrefill = (suggestion: ProductSuggestion) => {
+    setPrefill(suggestion);
     setAddOpen(true);
-    setAiSuggestion(null);
     setSearch("");
   };
 
