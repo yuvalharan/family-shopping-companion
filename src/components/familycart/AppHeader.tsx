@@ -18,10 +18,7 @@ export function AppHeader() {
         </div>
         <div className="flex items-center gap-1">
           <SpaceSwitcher />
-          <InviteHeaderButton />
-          <Button variant="ghost" size="sm" onClick={onLogout} aria-label="התנתק">
-            <LogOut className="size-4" />
-          </Button>
+          <SettingsPanelButton />
         </div>
       </div>
       <nav className="mx-auto max-w-xl px-4 flex gap-2">
