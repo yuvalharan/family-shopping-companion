@@ -117,13 +117,6 @@ function MasterListPage() {
                 <Download className="size-4" />
                 ייבא מוצרים נפוצים
               </button>
-              <button
-                onClick={() => setManageOpen(true)}
-                className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Settings2 className="size-4" />
-                נהל קטגוריות
-              </button>
             </div>
 
             <div className="relative mx-auto w-3/5">
