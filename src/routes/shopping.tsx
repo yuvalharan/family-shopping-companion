@@ -104,6 +104,14 @@ function ShoppingListsPage() {
     <div className="min-h-dvh bg-background">
       <AppHeader />
       <main className="mx-auto max-w-xl px-4 py-6 pb-32 space-y-6">
+        <Button
+          variant="outline"
+          className="w-full h-12 rounded-2xl"
+          onClick={() => setSavedOpen(true)}
+        >
+          <Bookmark className="size-5 ms-2" />
+          רשימות שמורות
+        </Button>
         {loading ? (
           <p className="text-center text-muted-foreground mt-12">טוען רשימות...</p>
         ) : (
