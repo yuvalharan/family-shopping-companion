@@ -300,6 +300,10 @@ function SpaceSettingsDialog({ space, open, onOpenChange }: { space: SharedSpace
             )}
 
             {!space.is_personal && (
+              <ImportFromPersonalSection targetSpaceId={space.id} />
+            )}
+
+            {!space.is_personal && (
               <div className="border-t pt-3 space-y-2">
                 {isOwner ? (
                   <Button variant="destructive" className="w-full" onClick={() => setConfirmDelete(true)}>
