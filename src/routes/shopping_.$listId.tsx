@@ -49,7 +49,7 @@ export const Route = createFileRoute("/shopping_/$listId")({
 
 function ShoppingListDetailPage() {
   const { listId } = Route.useParams();
-  const { lists, items, products, categories, loading } = useFamilyCart();
+  const { lists, items, products, categories, loading, savedLists } = useFamilyCart();
   const navigate = useNavigate();
 
   const list = lists.find((l) => l.id === listId);
@@ -70,6 +70,7 @@ function ShoppingListDetailPage() {
   const [nameDraft, setNameDraft] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmOverwrite, setConfirmOverwrite] = useState<string | null>(null);
 
   if (loading) {
     return (
@@ -189,7 +190,11 @@ function ShoppingListDetailPage() {
           <Button
             variant="outline"
             className="h-12 rounded-2xl"
-            onClick={() => actions.saveListAsTemplate(list.id)}
+            onClick={() => {
+              const existing = savedLists.find((s) => s.space_id === list.space_id && s.name.trim() === list.name.trim());
+              if (existing) setConfirmOverwrite(existing.id);
+              else actions.saveListAsTemplate(list.id);
+            }}
             disabled={listItems.length === 0}
           >
             <Bookmark className="size-5 ms-2" />
@@ -284,6 +289,24 @@ function ShoppingListDetailPage() {
             >
               מחק
             </AlertDialogAction>
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!confirmOverwrite} onOpenChange={(v) => { if (!v) setConfirmOverwrite(null); }}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-right">תבנית בשם זה כבר קיימת — האם לדרוס אותה?</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-start gap-2">
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (confirmOverwrite) actions.saveListAsTemplate(list.id, { overwriteId: confirmOverwrite });
+                setConfirmOverwrite(null);
+              }}
+            >דרוס</AlertDialogAction>
             <AlertDialogCancel>ביטול</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
