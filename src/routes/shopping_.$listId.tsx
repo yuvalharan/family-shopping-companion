@@ -49,7 +49,7 @@ export const Route = createFileRoute("/shopping_/$listId")({
 
 function ShoppingListDetailPage() {
   const { listId } = Route.useParams();
-  const { lists, items, products, categories, loading } = useFamilyCart();
+  const { lists, items, products, categories, loading, savedLists } = useFamilyCart();
   const navigate = useNavigate();
 
   const list = lists.find((l) => l.id === listId);
