@@ -247,15 +247,29 @@ function ShoppingListsPage() {
           <DialogHeader>
             <DialogTitle className="text-right">רשימת קנייה חדשה</DialogTitle>
           </DialogHeader>
-          <Input
-            autoFocus
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="לדוגמה: שופרסל שישי"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleCreate();
-            }}
-          />
+          <div className="space-y-3">
+            <div>
+              <Label className="mb-1.5 block">שם הרשימה</Label>
+              <Input
+                autoFocus
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="לדוגמה: שופרסל שישי"
+                onKeyDown={(e) => { if (e.key === "Enter") handleCreate(); }}
+              />
+            </div>
+            <div>
+              <Label className="mb-1.5 block">מרחב</Label>
+              <Select value={newListSpaceId || activeSpace?.id || ""} onValueChange={setNewListSpaceId}>
+                <SelectTrigger><SelectValue placeholder="בחר מרחב" /></SelectTrigger>
+                <SelectContent>
+                  {spaces.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>{s.is_personal ? "אישי" : s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           <DialogFooter className="sm:justify-start gap-2">
             <Button onClick={handleCreate} disabled={!name.trim() || creating}>
               צור רשימה
