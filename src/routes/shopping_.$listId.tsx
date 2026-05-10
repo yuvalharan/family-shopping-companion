@@ -358,6 +358,192 @@ function ShoppingListDetailPage() {
   );
 }
 
+type PendingItem = { id: string; product_id: string; quantity_needed: number; notes?: string | null; user_id?: string | null; sort_order?: number | null; created_at?: string };
+
+function GroupedPendingSection({
+  listId,
+  pending,
+  inCart,
+  productMap,
+  memberMap,
+  showAddedBy,
+  categoryOrder,
+}: {
+  listId: string;
+  pending: PendingItem[];
+  inCart: PendingItem[];
+  productMap: Map<string, Product>;
+  memberMap: Map<string, string>;
+  showAddedBy: boolean;
+  categoryOrder: string[];
+}) {
+  const groups = useMemo(() => {
+    const map = new Map<string, PendingItem[]>();
+    for (const it of pending) {
+      const p = productMap.get(it.product_id);
+      if (!p) continue;
+      const cat = p.category || "אחר";
+      if (!map.has(cat)) map.set(cat, []);
+      map.get(cat)!.push(it);
+    }
+    const present = Array.from(map.keys());
+    const ordered: string[] = [];
+    for (const c of categoryOrder) if (map.has(c) && !ordered.includes(c)) ordered.push(c);
+    for (const c of present) if (!ordered.includes(c)) ordered.push(c);
+    return ordered.map((cat) => ({ category: cat, items: map.get(cat)! }));
+  }, [pending, productMap, categoryOrder]);
+
+  const headerSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const itemsByCat = useMemo(() => {
+    const m = new Map<string, string[]>();
+    for (const g of groups) m.set(g.category, g.items.map((i) => i.id));
+    return m;
+  }, [groups]);
+
+  const flattenWithOrder = (orderedCats: string[], src: Map<string, string[]>) => {
+    const result: string[] = [];
+    for (const c of orderedCats) result.push(...(src.get(c) ?? []));
+    result.push(...inCart.map((i) => i.id));
+    return result;
+  };
+
+  const handleHeaderDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const cats = groups.map((g) => g.category);
+    const oldIdx = cats.indexOf(active.id as string);
+    const newIdx = cats.indexOf(over.id as string);
+    if (oldIdx < 0 || newIdx < 0) return;
+    const next = arrayMove(cats, oldIdx, newIdx);
+    actions.setListCategoryOrder(listId, next);
+    actions.reorderItems(listId, flattenWithOrder(next, itemsByCat));
+  };
+
+  const handleItemReorder = (category: string, orderedIds: string[]) => {
+    const nextItemsByCat = new Map(itemsByCat);
+    nextItemsByCat.set(category, orderedIds);
+    const cats = groups.map((g) => g.category);
+    actions.reorderItems(listId, flattenWithOrder(cats, nextItemsByCat));
+  };
+
+  const headerIds = groups.map((g) => g.category);
+
+  return (
+    <section className="space-y-3">
+      <h2 className="text-sm font-semibold text-muted-foreground">לקנייה</h2>
+      <DndContext
+        sensors={headerSensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleHeaderDragEnd}
+        modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+      >
+        <SortableContext items={headerIds} strategy={verticalListSortingStrategy}>
+          <div className="space-y-4">
+            {groups.map((g) => (
+              <CategoryGroup
+                key={g.category}
+                category={g.category}
+                items={g.items}
+                productMap={productMap}
+                memberMap={memberMap}
+                showAddedBy={showAddedBy}
+                onReorder={(ids) => handleItemReorder(g.category, ids)}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+    </section>
+  );
+}
+
+function CategoryGroup({
+  category,
+  items,
+  productMap,
+  memberMap,
+  showAddedBy,
+  onReorder,
+}: {
+  category: string;
+  items: PendingItem[];
+  productMap: Map<string, Product>;
+  memberMap: Map<string, string>;
+  showAddedBy: boolean;
+  onReorder: (orderedIds: string[]) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: category });
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+  const itemSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+  const ids = items.map((i) => i.id);
+  const handleEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const oldIdx = ids.indexOf(active.id as string);
+    const newIdx = ids.indexOf(over.id as string);
+    if (oldIdx < 0 || newIdx < 0) return;
+    onReorder(arrayMove(ids, oldIdx, newIdx));
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="space-y-2">
+      <div className="flex items-center gap-2 px-1">
+        <button
+          type="button"
+          aria-label="גרור לסידור קטגוריות"
+          className="size-7 -ms-1 flex items-center justify-center text-muted-foreground hover:text-foreground touch-none cursor-grab active:cursor-grabbing"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="size-4" />
+        </button>
+        <h3 className="text-base font-bold">{category}</h3>
+        <span className="text-xs text-muted-foreground">({items.length})</span>
+      </div>
+      <DndContext
+        sensors={itemSensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleEnd}
+        modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+      >
+        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+          <div className="space-y-2.5">
+            {items.map((item) => {
+              const p = productMap.get(item.product_id);
+              if (!p) return null;
+              const addedBy = showAddedBy && item.user_id ? memberMap.get(item.user_id) : undefined;
+              return (
+                <ItemRow
+                  key={item.id}
+                  itemId={item.id}
+                  product={p}
+                  qty={item.quantity_needed}
+                  notes={item.notes ?? null}
+                  checked={false}
+                  addedBy={addedBy}
+                />
+              );
+            })}
+          </div>
+        </SortableContext>
+      </DndContext>
+    </div>
+  );
+}
+
 function SortableSection({
   title,
   items,
