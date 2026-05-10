@@ -329,6 +329,37 @@ function ShoppingListsPage() {
       </AlertDialog>
 
       <SavedListsDialog open={savedOpen} onOpenChange={setSavedOpen} />
+
+      <Dialog open={!!notesEdit} onOpenChange={(v) => { if (!v) setNotesEdit(null); }}>
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-right">הערות לרשימה</DialogTitle>
+          </DialogHeader>
+          {notesEdit && (
+            <Textarea
+              autoFocus
+              value={notesEdit.draft}
+              onChange={(e) => setNotesEdit({ ...notesEdit, draft: e.target.value })}
+              placeholder="לדוגמה: לקנות לפני שישי, לא לשכוח קופון"
+              className="min-h-32 text-right"
+              dir="rtl"
+            />
+          )}
+          <DialogFooter className="sm:justify-start gap-2">
+            <Button
+              onClick={() => {
+                if (notesEdit) {
+                  void actions.setListNotes(notesEdit.list.id, notesEdit.draft);
+                }
+                setNotesEdit(null);
+              }}
+            >
+              שמור
+            </Button>
+            <Button variant="ghost" onClick={() => setNotesEdit(null)}>ביטול</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
