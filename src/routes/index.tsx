@@ -54,6 +54,15 @@ function MasterListPage() {
   const [search, setSearch] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const [activeCat, setActiveCat] = useState<string>("__all__");
+  const [sortBy, setSortBy] = useState<"category" | "name_asc" | "name_desc" | "quantity">(() => {
+    if (typeof window === "undefined") return "category";
+    const v = localStorage.getItem("familycart:master-sort");
+    return (v === "name_asc" || v === "name_desc" || v === "quantity" || v === "category") ? v : "category";
+  });
+  const [sortOpen, setSortOpen] = useState(false);
+  useEffect(() => {
+    if (typeof window !== "undefined") localStorage.setItem("familycart:master-sort", sortBy);
+  }, [sortBy]);
 
 
   useEffect(() => {
