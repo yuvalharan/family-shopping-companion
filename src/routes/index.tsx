@@ -112,7 +112,7 @@ function MasterListPage() {
     const arr = [...filteredProducts];
     if (sortBy === "name_asc") arr.sort((a, b) => a.name.localeCompare(b.name, "he"));
     else if (sortBy === "name_desc") arr.sort((a, b) => b.name.localeCompare(a.name, "he"));
-    else if (sortBy === "quantity") arr.sort((a, b) => b.default_quantity - a.default_quantity);
+    else if (sortBy === "date_added") arr.sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""));
     return arr;
   }, [filteredProducts, sortBy]);
 
