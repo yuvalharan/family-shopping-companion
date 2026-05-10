@@ -14,6 +14,7 @@ import { Route as ShoppingRouteImport } from './routes/shopping'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ShoppingListIdRouteImport } from './routes/shopping_.$listId'
+import { Route as SharedShareCodeRouteImport } from './routes/shared.$shareCode'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -40,12 +41,18 @@ const ShoppingListIdRoute = ShoppingListIdRouteImport.update({
   path: '/shopping/$listId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SharedShareCodeRoute = SharedShareCodeRouteImport.update({
+  id: '/shared/$shareCode',
+  path: '/shared/$shareCode',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/shopping': typeof ShoppingRoute
   '/signup': typeof SignupRoute
+  '/shared/$shareCode': typeof SharedShareCodeRoute
   '/shopping/$listId': typeof ShoppingListIdRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/shopping': typeof ShoppingRoute
   '/signup': typeof SignupRoute
+  '/shared/$shareCode': typeof SharedShareCodeRoute
   '/shopping/$listId': typeof ShoppingListIdRoute
 }
 export interface FileRoutesById {
@@ -61,19 +69,33 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/shopping': typeof ShoppingRoute
   '/signup': typeof SignupRoute
+  '/shared/$shareCode': typeof SharedShareCodeRoute
   '/shopping_/$listId': typeof ShoppingListIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/shopping' | '/signup' | '/shopping/$listId'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/shopping'
+    | '/signup'
+    | '/shared/$shareCode'
+    | '/shopping/$listId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/shopping' | '/signup' | '/shopping/$listId'
+  to:
+    | '/'
+    | '/login'
+    | '/shopping'
+    | '/signup'
+    | '/shared/$shareCode'
+    | '/shopping/$listId'
   id:
     | '__root__'
     | '/'
     | '/login'
     | '/shopping'
     | '/signup'
+    | '/shared/$shareCode'
     | '/shopping_/$listId'
   fileRoutesById: FileRoutesById
 }
@@ -82,6 +104,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ShoppingRoute: typeof ShoppingRoute
   SignupRoute: typeof SignupRoute
+  SharedShareCodeRoute: typeof SharedShareCodeRoute
   ShoppingListIdRoute: typeof ShoppingListIdRoute
 }
 
@@ -122,6 +145,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShoppingListIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/shared/$shareCode': {
+      id: '/shared/$shareCode'
+      path: '/shared/$shareCode'
+      fullPath: '/shared/$shareCode'
+      preLoaderRoute: typeof SharedShareCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -130,8 +160,18 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ShoppingRoute: ShoppingRoute,
   SignupRoute: SignupRoute,
+  SharedShareCodeRoute: SharedShareCodeRoute,
   ShoppingListIdRoute: ShoppingListIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
