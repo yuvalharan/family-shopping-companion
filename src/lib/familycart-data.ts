@@ -45,6 +45,8 @@ export type ShoppingList = {
   is_completed: boolean;
   completed_at?: string | null;
   notes?: string | null;
+  group_by_category?: boolean;
+  category_order?: string[] | null;
   space_id: string;
   created_at?: string;
 };
