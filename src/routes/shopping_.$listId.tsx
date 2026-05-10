@@ -201,6 +201,13 @@ function ShoppingListDetailPage() {
             </button>
           )}
           <button
+            onClick={() => setShareOpen(true)}
+            className="size-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10"
+            aria-label="שתף"
+          >
+            <Share2 className="size-4" />
+          </button>
+          <button
             onClick={() => setConfirmDelete(true)}
             className="size-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10"
             aria-label="מחק"
