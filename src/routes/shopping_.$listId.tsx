@@ -236,43 +236,27 @@ function ShoppingListDetailPage() {
         </div>
 
         {pending.length > 0 && (
-          <section className="space-y-2.5">
-            <h2 className="text-sm font-semibold text-muted-foreground">לקנייה</h2>
-            {pending.map((item) => {
-              const p = productMap.get(item.product_id);
-              if (!p) return null;
-              return (
-                <ItemRow
-                  key={item.id}
-                  itemId={item.id}
-                  product={p}
-                  qty={item.quantity_needed}
-                  notes={item.notes ?? null}
-                  checked={false}
-                />
-              );
-            })}
-          </section>
+          <SortableSection
+            title="לקנייה"
+            items={pending}
+            productMap={productMap}
+            memberMap={memberMap}
+            showAddedBy={isShared}
+            onReorder={(ids) => actions.reorderItems(list.id, [...ids, ...inCart.map((i) => i.id)])}
+            checked={false}
+          />
         )}
 
         {inCart.length > 0 && (
-          <section className="space-y-2.5">
-            <h2 className="text-sm font-semibold text-muted-foreground">בעגלה</h2>
-            {inCart.map((item) => {
-              const p = productMap.get(item.product_id);
-              if (!p) return null;
-              return (
-                <ItemRow
-                  key={item.id}
-                  itemId={item.id}
-                  product={p}
-                  qty={item.quantity_needed}
-                  notes={item.notes ?? null}
-                  checked
-                />
-              );
-            })}
-          </section>
+          <SortableSection
+            title="בעגלה"
+            items={inCart}
+            productMap={productMap}
+            memberMap={memberMap}
+            showAddedBy={isShared}
+            onReorder={(ids) => actions.reorderItems(list.id, [...pending.map((i) => i.id), ...ids])}
+            checked
+          />
         )}
 
         {listItems.length === 0 && (
