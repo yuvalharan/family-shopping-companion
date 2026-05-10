@@ -38,6 +38,41 @@ export type Database = {
         }
         Relationships: []
       }
+      list_shares: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          share_code: string
+          shopping_list_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          share_code: string
+          shopping_list_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          share_code?: string
+          shopping_list_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "list_shares_shopping_list_id_fkey"
+            columns: ["shopping_list_id"]
+            isOneToOne: false
+            referencedRelation: "shopping_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category: string
@@ -327,6 +362,10 @@ export type Database = {
     }
     Functions: {
       accept_invite: { Args: { _code: string }; Returns: string }
+      can_manage_list_share: {
+        Args: { _list_id: string; _user_id: string }
+        Returns: boolean
+      }
       get_invite_space: {
         Args: { _code: string }
         Returns: {
@@ -336,6 +375,7 @@ export type Database = {
           space_name: string
         }[]
       }
+      get_shared_list: { Args: { _code: string }; Returns: Json }
       get_space_members: {
         Args: { _space_id: string }
         Returns: {
@@ -347,6 +387,10 @@ export type Database = {
       }
       is_space_member: {
         Args: { _space_id: string; _user_id: string }
+        Returns: boolean
+      }
+      toggle_shared_item: {
+        Args: { _checked: boolean; _code: string; _item_id: string }
         Returns: boolean
       }
     }

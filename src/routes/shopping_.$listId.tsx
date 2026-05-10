@@ -8,9 +8,11 @@ import {
   GripVertical,
   Plus,
   Search,
+  Share2,
   Trash2,
   Pencil,
 } from "lucide-react";
+import { ShareListDialog } from "@/components/familycart/ShareListDialog";
 import {
   DndContext,
   PointerSensor,
@@ -103,6 +105,7 @@ function ShoppingListDetailPage() {
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [addOpen, setAddOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmOverwrite, setConfirmOverwrite] = useState<string | null>(null);
 
@@ -197,6 +200,13 @@ function ShoppingListDetailPage() {
               <Pencil className="size-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
           )}
+          <button
+            onClick={() => setShareOpen(true)}
+            className="size-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10"
+            aria-label="שתף"
+          >
+            <Share2 className="size-4" />
+          </button>
           <button
             onClick={() => setConfirmDelete(true)}
             className="size-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10"
@@ -317,6 +327,8 @@ function ShoppingListDetailPage() {
         categories={categories}
         existingProductIds={new Set(listItems.map((i) => i.product_id))}
       />
+
+      <ShareListDialog open={shareOpen} onOpenChange={setShareOpen} listId={list.id} />
 
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent dir="rtl">
