@@ -156,7 +156,10 @@ function SharedListPage() {
             {product.name}
           </div>
           <div className="text-xs text-muted-foreground">
-            {formatQuantity(item.quantity_needed, product.unit)}
+            {(() => {
+              const q = formatQuantity(item.quantity_needed, product.unit);
+              return `${q.value} ${q.unit}`;
+            })()}
             {item.notes ? ` · ${item.notes}` : ""}
           </div>
         </div>
