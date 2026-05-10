@@ -87,12 +87,18 @@ function MasterListPage() {
     });
   };
 
-  const grouped = useMemo(() => {
+  const filteredProducts = useMemo(() => {
     const q = search.trim().toLowerCase();
+    return products.filter((p) => {
+      if (activeCat !== "__all__" && p.category !== activeCat) return false;
+      if (q && !p.name.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [products, search, activeCat]);
+
+  const grouped = useMemo(() => {
     const map = new Map<string, Product[]>();
-    for (const p of products) {
-      if (activeCat !== "__all__" && p.category !== activeCat) continue;
-      if (q && !p.name.toLowerCase().includes(q)) continue;
+    for (const p of filteredProducts) {
       if (!map.has(p.category)) map.set(p.category, []);
       map.get(p.category)!.push(p);
     }
@@ -100,7 +106,15 @@ function MasterListPage() {
       category: c,
       products: map.get(c)!,
     }));
-  }, [products, categories, search, activeCat]);
+  }, [filteredProducts, categories]);
+
+  const flatSorted = useMemo(() => {
+    const arr = [...filteredProducts];
+    if (sortBy === "name_asc") arr.sort((a, b) => a.name.localeCompare(b.name, "he"));
+    else if (sortBy === "name_desc") arr.sort((a, b) => b.name.localeCompare(a.name, "he"));
+    else if (sortBy === "quantity") arr.sort((a, b) => b.default_quantity - a.default_quantity);
+    return arr;
+  }, [filteredProducts, sortBy]);
 
   const isFiltering = search.trim().length > 0 || activeCat !== "__all__";
   const isEmpty = !loading && products.length === 0;
