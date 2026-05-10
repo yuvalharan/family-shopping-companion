@@ -180,16 +180,18 @@ function ensureLoaded() {
   return loadingPromise;
 }
 
-supabase.auth.onAuthStateChange((_e, session) => {
-  const newUserId = session?.user?.id ?? null;
-  if (newUserId !== currentUserId) {
-    currentUserId = newUserId;
-    loaded = false; loadingPromise = null;
-    state = { products: [], items: [], lists: [], categoriesBySpace: {}, savedLists: [], savedItems: [], spaces: [], activeSpaceId: null, invites: [], loading: !!newUserId };
-    emit();
-    if (newUserId) ensureLoaded();
-  }
-});
+try {
+  supabase.auth.onAuthStateChange((_e, session) => {
+    const newUserId = session?.user?.id ?? null;
+    if (newUserId !== currentUserId) {
+      currentUserId = newUserId;
+      loaded = false; loadingPromise = null;
+      state = { products: [], items: [], lists: [], categoriesBySpace: {}, savedLists: [], savedItems: [], spaces: [], activeSpaceId: null, invites: [], loading: !!newUserId };
+      emit();
+      if (newUserId) ensureLoaded();
+    }
+  });
+} catch { /* supabase unavailable (e.g. SSR without env vars) */ }
 
 export function useFamilyCart() {
   const [snapshot, setSnapshot] = useState<State>(getSnapshot);
