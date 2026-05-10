@@ -156,10 +156,27 @@ function ShoppingListsPage() {
                             <div className="text-sm text-muted-foreground mt-0.5">
                               {s.total} פריטים · {s.checked} בעגלה
                             </div>
+                            {list.notes && (
+                              <div className="text-xs text-muted-foreground mt-1 truncate italic">
+                                {list.notes}
+                              </div>
+                            )}
                           </div>
                           <div className="text-primary text-sm font-medium shrink-0">פתח</div>
                         </div>
                       </Link>
+                      <button
+                        onClick={() => setNotesEdit({ list, draft: list.notes ?? "" })}
+                        aria-label="הערות לרשימה"
+                        className={
+                          "size-9 rounded-xl flex items-center justify-center transition-colors shrink-0 " +
+                          (list.notes
+                            ? "text-primary hover:bg-primary/10"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted")
+                        }
+                      >
+                        <StickyNote className="size-4" />
+                      </button>
                       <button
                         onClick={() => setConfirmDelete({ list, isHistory: false })}
                         aria-label="מחק רשימה"
