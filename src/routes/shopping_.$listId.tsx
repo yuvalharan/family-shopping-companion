@@ -237,6 +237,19 @@ function ShoppingListDetailPage() {
         </div>
 
         {pending.length > 0 && (
+          <div className="flex items-center justify-between gap-2 px-1 pt-1">
+            <Label htmlFor="group-cats" className="text-sm text-muted-foreground cursor-pointer">
+              הצג לפי קטגוריות
+            </Label>
+            <Switch
+              id="group-cats"
+              checked={!!list.group_by_category}
+              onCheckedChange={(v) => actions.setListGroupByCategory(list.id, v)}
+            />
+          </div>
+        )}
+
+        {pending.length > 0 && !list.group_by_category && (
           <SortableSection
             title="לקנייה"
             items={pending}
@@ -245,6 +258,18 @@ function ShoppingListDetailPage() {
             showAddedBy={isShared}
             onReorder={(ids) => actions.reorderItems(list.id, [...ids, ...inCart.map((i) => i.id)])}
             checked={false}
+          />
+        )}
+
+        {pending.length > 0 && list.group_by_category && (
+          <GroupedPendingSection
+            listId={list.id}
+            pending={pending}
+            inCart={inCart}
+            productMap={productMap}
+            memberMap={memberMap}
+            showAddedBy={isShared}
+            categoryOrder={list.category_order ?? []}
           />
         )}
 
