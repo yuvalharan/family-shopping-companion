@@ -185,7 +185,7 @@ function MasterListPage() {
                     { v: "name_asc", l: "לפי שם א-ת" },
                     { v: "name_desc", l: "לפי שם ת-א" },
                     { v: "category", l: "לפי קטגוריה" },
-                    { v: "quantity", l: "לפי כמות" },
+                    { v: "date_added", l: "לפי תאריך הוספה" },
                   ] as const).map((opt) => (
                     <button
                       key={opt.v}
