@@ -237,55 +237,62 @@ function MasterListPage() {
             </div>
           </div>
         )}
-        {!loading && !isEmpty && grouped.length === 0 && (
+        {!loading && !isEmpty && filteredProducts.length === 0 && (
           <p className="text-center text-muted-foreground mt-12">לא נמצאו מוצרים</p>
         )}
-        {grouped.map(({ category, products }) => {
-          const isOpen = isFiltering || expanded.has(category);
-          return (
-            <section key={category}>
-              <button
-                onClick={() => toggle(category)}
-                className="w-full text-right bg-surface rounded-2xl shadow-soft px-4 py-3 mb-3 font-bold text-foreground hover:bg-muted transition-colors border border-foreground"
-                aria-expanded={isOpen}
-              >
-                {category}
-              </button>
-              {isOpen && (
-                <div className="space-y-2.5">
-                  {products.map((p) => (
-                    <div
-                      key={p.id}
-                      className="bg-surface rounded-2xl shadow-soft p-4 flex items-center justify-between gap-3"
-                    >
-                      <div className="min-w-0">
-                        <div className="font-medium truncate">{p.name}</div>
-                        <InlineQuantity product={p} />
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <QuickAddPopover product={p} activeLists={activeLists} />
-                        <button
-                          onClick={() => setEditProduct(p)}
-                          className="size-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted flex items-center justify-center transition-colors"
-                          aria-label="ערוך מוצר"
-                        >
-                          <Pencil className="size-4" />
-                        </button>
-                        <button
-                          onClick={() => setDeleteProduct(p)}
-                          className="size-9 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex items-center justify-center transition-colors"
-                          aria-label="מחק מוצר"
-                        >
-                          <Trash2 className="size-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
+        {(() => {
+          const renderCard = (p: Product) => (
+            <div
+              key={p.id}
+              className="bg-surface rounded-2xl shadow-soft p-4 flex items-center justify-between gap-3"
+            >
+              <div className="min-w-0">
+                <div className="font-medium truncate">{p.name}</div>
+                <InlineQuantity product={p} />
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <QuickAddPopover product={p} activeLists={activeLists} />
+                <button
+                  onClick={() => setEditProduct(p)}
+                  className="size-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted flex items-center justify-center transition-colors"
+                  aria-label="ערוך מוצר"
+                >
+                  <Pencil className="size-4" />
+                </button>
+                <button
+                  onClick={() => setDeleteProduct(p)}
+                  className="size-9 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex items-center justify-center transition-colors"
+                  aria-label="מחק מוצר"
+                >
+                  <Trash2 className="size-4" />
+                </button>
+              </div>
+            </div>
           );
-        })}
+
+          if (sortBy === "category") {
+            return grouped.map(({ category, products }) => {
+              const isOpen = isFiltering || expanded.has(category);
+              return (
+                <section key={category}>
+                  <button
+                    onClick={() => toggle(category)}
+                    className="w-full text-right bg-surface rounded-2xl shadow-soft px-4 py-3 mb-3 font-bold text-foreground hover:bg-muted transition-colors border border-foreground"
+                    aria-expanded={isOpen}
+                  >
+                    {category}
+                  </button>
+                  {isOpen && (
+                    <div className="space-y-2.5">
+                      {products.map(renderCard)}
+                    </div>
+                  )}
+                </section>
+              );
+            });
+          }
+          return <div className="space-y-2.5">{flatSorted.map(renderCard)}</div>;
+        })()}
       </main>
       {isEmpty ? (
         <AddProductDialog open={addOpen} onOpenChange={(v) => { setAddOpen(v); if (!v) setPrefill(null); }} prefill={prefill ?? undefined} />
