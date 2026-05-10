@@ -182,10 +182,10 @@ function MasterListPage() {
                 </PopoverTrigger>
                 <PopoverContent align="start" dir="rtl" className="w-56 p-1">
                   {([
-                    { v: "name_asc", l: "לפי שם א-ת" },
-                    { v: "name_desc", l: "לפי שם ת-א" },
                     { v: "category", l: "לפי קטגוריה" },
                     { v: "date_added", l: "לפי תאריך הוספה" },
+                    { v: "name_asc", l: "לפי שם א-ת" },
+                    { v: "name_desc", l: "לפי שם ת-א" },
                   ] as const).map((opt) => (
                     <button
                       key={opt.v}
