@@ -142,32 +142,62 @@ function MasterListPage() {
               </button>
             </div>
 
-            <div className="relative mx-auto w-3/5">
-              <Search className="size-4 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setTimeout(() => setSearchFocused(false), 150)}
-                placeholder="חיפוש מוצר..."
-                className="pr-9 pl-9 h-11 rounded-xl"
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch("")}
-                  aria-label="נקה חיפוש"
-                  className="absolute left-2 top-1/2 -translate-y-1/2 size-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted"
-                >
-                  <X className="size-4" />
-                </button>
-              )}
-              {searchFocused && search.trim().length > 0 && (
-                <ProductAutocomplete
-                  query={search}
-                  onPick={openAddWithPrefill}
-                  className="absolute z-50 top-full mt-1 w-full bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
+            <div className="mx-auto w-3/5 flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="size-4 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setTimeout(() => setSearchFocused(false), 150)}
+                  placeholder="חיפוש מוצר..."
+                  className="pr-9 pl-9 h-11 rounded-xl"
                 />
-              )}
+                {search && (
+                  <button
+                    onClick={() => setSearch("")}
+                    aria-label="נקה חיפוש"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 size-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted"
+                  >
+                    <X className="size-4" />
+                  </button>
+                )}
+                {searchFocused && search.trim().length > 0 && (
+                  <ProductAutocomplete
+                    query={search}
+                    onPick={openAddWithPrefill}
+                    className="absolute z-50 top-full mt-1 w-full bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
+                  />
+                )}
+              </div>
+              <Popover open={sortOpen} onOpenChange={setSortOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    aria-label="מיון"
+                    className="h-11 px-3 rounded-xl border border-input bg-background hover:bg-muted flex items-center gap-1.5 text-sm text-foreground shrink-0"
+                  >
+                    <ArrowUpDown className="size-4" />
+                    <span>מיון</span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="start" dir="rtl" className="w-56 p-1">
+                  {([
+                    { v: "name_asc", l: "לפי שם א-ת" },
+                    { v: "name_desc", l: "לפי שם ת-א" },
+                    { v: "category", l: "לפי קטגוריה" },
+                    { v: "quantity", l: "לפי כמות" },
+                  ] as const).map((opt) => (
+                    <button
+                      key={opt.v}
+                      onClick={() => { setSortBy(opt.v); setSortOpen(false); }}
+                      className="w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm hover:bg-muted text-right"
+                    >
+                      <span>{opt.l}</span>
+                      {sortBy === opt.v && <Check className="size-4 text-primary" />}
+                    </button>
+                  ))}
+                </PopoverContent>
+              </Popover>
             </div>
 
 
