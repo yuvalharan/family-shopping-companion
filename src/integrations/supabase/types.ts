@@ -176,6 +176,7 @@ export type Database = {
           product_id: string
           quantity_needed: number
           shopping_list_id: string
+          sort_order: number | null
           space_id: string
           user_id: string | null
         }
@@ -187,6 +188,7 @@ export type Database = {
           product_id: string
           quantity_needed?: number
           shopping_list_id: string
+          sort_order?: number | null
           space_id: string
           user_id?: string | null
         }
@@ -198,6 +200,7 @@ export type Database = {
           product_id?: string
           quantity_needed?: number
           shopping_list_id?: string
+          sort_order?: number | null
           space_id?: string
           user_id?: string | null
         }
@@ -225,6 +228,7 @@ export type Database = {
           id: string
           is_completed: boolean
           name: string
+          notes: string | null
           space_id: string
           user_id: string | null
         }
@@ -234,6 +238,7 @@ export type Database = {
           id?: string
           is_completed?: boolean
           name: string
+          notes?: string | null
           space_id: string
           user_id?: string | null
         }
@@ -243,6 +248,7 @@ export type Database = {
           id?: string
           is_completed?: boolean
           name?: string
+          notes?: string | null
           space_id?: string
           user_id?: string | null
         }

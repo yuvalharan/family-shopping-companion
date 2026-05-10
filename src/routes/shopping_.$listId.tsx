@@ -1,15 +1,35 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { toast } from "sonner";
 import {
   ArrowRight,
   Bookmark,
   Check,
+  GripVertical,
   Plus,
   Search,
   Trash2,
   Pencil,
 } from "lucide-react";
+import {
+  DndContext,
+  PointerSensor,
+  TouchSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { restrictToVerticalAxis, restrictToParentElement } from "@dnd-kit/modifiers";
 import { formatQuantity } from "@/lib/units";
 import { AppHeader } from "@/components/familycart/AppHeader";
 import { Button } from "@/components/ui/button";
@@ -37,6 +57,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useSpaceMembers } from "@/hooks/use-space-members";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
 import type { Product } from "@/lib/familycart-data";
 
@@ -49,22 +70,34 @@ export const Route = createFileRoute("/shopping_/$listId")({
 
 function ShoppingListDetailPage() {
   const { listId } = Route.useParams();
-  const { lists, items, products, categories, loading, savedLists } = useFamilyCart();
+  const { lists, items, products, categories, loading, savedLists, spaces } = useFamilyCart();
   const navigate = useNavigate();
 
   const list = lists.find((l) => l.id === listId);
+  const listSpace = list ? spaces.find((s) => s.id === list.space_id) : null;
+  const isShared = !!listSpace && !listSpace.is_personal;
+  const memberMap = useSpaceMembers(isShared ? list?.space_id ?? null : null);
+
   const productMap = useMemo(() => {
     const m = new Map<string, Product>();
     products.forEach((p) => m.set(p.id, p));
     return m;
   }, [products]);
 
+  const sortFn = (a: { sort_order?: number | null; created_at?: string }, b: { sort_order?: number | null; created_at?: string }) => {
+    const ao = a.sort_order ?? Number.POSITIVE_INFINITY;
+    const bo = b.sort_order ?? Number.POSITIVE_INFINITY;
+    if (ao !== bo) return ao - bo;
+    return (a.created_at ?? "").localeCompare(b.created_at ?? "");
+  };
+
   const listItems = useMemo(
     () => items.filter((i) => i.shopping_list_id === listId),
     [items, listId],
   );
-  const pending = listItems.filter((i) => !i.is_checked);
-  const inCart = listItems.filter((i) => i.is_checked);
+  const pending = useMemo(() => listItems.filter((i) => !i.is_checked).slice().sort(sortFn), [listItems]);
+  const inCart = useMemo(() => listItems.filter((i) => i.is_checked).slice().sort(sortFn), [listItems]);
+
 
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
@@ -203,43 +236,27 @@ function ShoppingListDetailPage() {
         </div>
 
         {pending.length > 0 && (
-          <section className="space-y-2.5">
-            <h2 className="text-sm font-semibold text-muted-foreground">לקנייה</h2>
-            {pending.map((item) => {
-              const p = productMap.get(item.product_id);
-              if (!p) return null;
-              return (
-                <ItemRow
-                  key={item.id}
-                  itemId={item.id}
-                  product={p}
-                  qty={item.quantity_needed}
-                  notes={item.notes ?? null}
-                  checked={false}
-                />
-              );
-            })}
-          </section>
+          <SortableSection
+            title="לקנייה"
+            items={pending}
+            productMap={productMap}
+            memberMap={memberMap}
+            showAddedBy={isShared}
+            onReorder={(ids) => actions.reorderItems(list.id, [...ids, ...inCart.map((i) => i.id)])}
+            checked={false}
+          />
         )}
 
         {inCart.length > 0 && (
-          <section className="space-y-2.5">
-            <h2 className="text-sm font-semibold text-muted-foreground">בעגלה</h2>
-            {inCart.map((item) => {
-              const p = productMap.get(item.product_id);
-              if (!p) return null;
-              return (
-                <ItemRow
-                  key={item.id}
-                  itemId={item.id}
-                  product={p}
-                  qty={item.quantity_needed}
-                  notes={item.notes ?? null}
-                  checked
-                />
-              );
-            })}
-          </section>
+          <SortableSection
+            title="בעגלה"
+            items={inCart}
+            productMap={productMap}
+            memberMap={memberMap}
+            showAddedBy={isShared}
+            onReorder={(ids) => actions.reorderItems(list.id, [...pending.map((i) => i.id), ...ids])}
+            checked
+          />
         )}
 
         {listItems.length === 0 && (
@@ -315,22 +332,97 @@ function ShoppingListDetailPage() {
   );
 }
 
+function SortableSection({
+  title,
+  items,
+  productMap,
+  memberMap,
+  showAddedBy,
+  onReorder,
+  checked,
+}: {
+  title: string;
+  items: Array<{ id: string; product_id: string; quantity_needed: number; notes?: string | null; user_id?: string | null }>;
+  productMap: Map<string, Product>;
+  memberMap: Map<string, string>;
+  showAddedBy: boolean;
+  onReorder: (orderedIds: string[]) => void;
+  checked: boolean;
+}) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+  const ids = items.map((i) => i.id);
+  const handleEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const oldIdx = ids.indexOf(active.id as string);
+    const newIdx = ids.indexOf(over.id as string);
+    if (oldIdx < 0 || newIdx < 0) return;
+    onReorder(arrayMove(ids, oldIdx, newIdx));
+  };
+  return (
+    <section className="space-y-2.5">
+      <h2 className="text-sm font-semibold text-muted-foreground">{title}</h2>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleEnd}
+        modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+      >
+        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+          <div className="space-y-2.5">
+            {items.map((item) => {
+              const p = productMap.get(item.product_id);
+              if (!p) return null;
+              const addedBy = showAddedBy && item.user_id ? memberMap.get(item.user_id) : undefined;
+              return (
+                <ItemRow
+                  key={item.id}
+                  itemId={item.id}
+                  product={p}
+                  qty={item.quantity_needed}
+                  notes={item.notes ?? null}
+                  checked={checked}
+                  addedBy={addedBy}
+                />
+              );
+            })}
+          </div>
+        </SortableContext>
+      </DndContext>
+    </section>
+  );
+}
+
 function ItemRow({
   itemId,
   product,
   qty,
   notes,
   checked,
+  addedBy,
 }: {
   itemId: string;
   product: Product;
   qty: number;
   notes: string | null;
   checked: boolean;
+  addedBy?: string;
 }) {
   const [editingQty, setEditingQty] = useState(false);
   const [qtyDraft, setQtyDraft] = useState(String(qty));
   const [notesDraft, setNotesDraft] = useState(notes ?? "");
+
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: itemId });
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  };
 
   const startQty = () => {
     setQtyDraft(String(qty));
@@ -353,11 +445,22 @@ function ItemRow({
 
   return (
     <div
+      ref={setNodeRef}
+      style={style}
       className={
-        "rounded-2xl shadow-soft p-4 flex items-start justify-between gap-3 transition-colors " +
+        "rounded-2xl shadow-soft p-4 flex items-start justify-between gap-2 transition-colors " +
         (checked ? "bg-green-100 dark:bg-green-900/30 opacity-70" : "bg-surface")
       }
     >
+      <button
+        type="button"
+        aria-label="גרור לסידור"
+        className="size-8 -ms-1 mt-0.5 shrink-0 flex items-center justify-center text-muted-foreground hover:text-foreground touch-none cursor-grab active:cursor-grabbing"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="size-4" />
+      </button>
       <div className="flex items-start gap-3 min-w-0 flex-1">
         <input
           type="checkbox"
@@ -368,6 +471,9 @@ function ItemRow({
         />
         <div className="min-w-0 flex-1 space-y-1.5">
           <div className="font-medium truncate">{product.name}</div>
+          {addedBy && (
+            <div className="text-[11px] text-muted-foreground/80">נוסף על ידי {addedBy}</div>
+          )}
 
           {editingQty ? (
             <div className="flex items-center gap-1.5">
