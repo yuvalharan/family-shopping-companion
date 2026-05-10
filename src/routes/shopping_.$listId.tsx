@@ -105,6 +105,7 @@ function ShoppingListDetailPage() {
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [addOpen, setAddOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmOverwrite, setConfirmOverwrite] = useState<string | null>(null);
 
