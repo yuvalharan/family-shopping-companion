@@ -223,8 +223,10 @@ export type Database = {
       }
       shopping_lists: {
         Row: {
+          category_order: string[]
           completed_at: string | null
           created_at: string
+          group_by_category: boolean
           id: string
           is_completed: boolean
           name: string
@@ -233,8 +235,10 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          category_order?: string[]
           completed_at?: string | null
           created_at?: string
+          group_by_category?: boolean
           id?: string
           is_completed?: boolean
           name: string
@@ -243,8 +247,10 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          category_order?: string[]
           completed_at?: string | null
           created_at?: string
+          group_by_category?: boolean
           id?: string
           is_completed?: boolean
           name?: string
