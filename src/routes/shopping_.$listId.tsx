@@ -328,6 +328,8 @@ function ShoppingListDetailPage() {
         existingProductIds={new Set(listItems.map((i) => i.product_id))}
       />
 
+      <ShareListDialog open={shareOpen} onOpenChange={setShareOpen} listId={list.id} />
+
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent dir="rtl">
           <AlertDialogHeader>
