@@ -5,11 +5,31 @@ import {
   ArrowRight,
   Bookmark,
   Check,
+  GripVertical,
   Plus,
   Search,
   Trash2,
   Pencil,
 } from "lucide-react";
+import {
+  DndContext,
+  PointerSensor,
+  TouchSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { restrictToVerticalAxis, restrictToParentElement } from "@dnd-kit/modifiers";
 import { formatQuantity } from "@/lib/units";
 import { AppHeader } from "@/components/familycart/AppHeader";
 import { Button } from "@/components/ui/button";
@@ -37,6 +57,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useSpaceMembers } from "@/hooks/use-space-members";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
 import type { Product } from "@/lib/familycart-data";
 
@@ -49,22 +70,34 @@ export const Route = createFileRoute("/shopping_/$listId")({
 
 function ShoppingListDetailPage() {
   const { listId } = Route.useParams();
-  const { lists, items, products, categories, loading, savedLists } = useFamilyCart();
+  const { lists, items, products, categories, loading, savedLists, spaces } = useFamilyCart();
   const navigate = useNavigate();
 
   const list = lists.find((l) => l.id === listId);
+  const listSpace = list ? spaces.find((s) => s.id === list.space_id) : null;
+  const isShared = !!listSpace && !listSpace.is_personal;
+  const memberMap = useSpaceMembers(isShared ? list?.space_id ?? null : null);
+
   const productMap = useMemo(() => {
     const m = new Map<string, Product>();
     products.forEach((p) => m.set(p.id, p));
     return m;
   }, [products]);
 
+  const sortFn = (a: { sort_order?: number | null; created_at?: string }, b: { sort_order?: number | null; created_at?: string }) => {
+    const ao = a.sort_order ?? Number.POSITIVE_INFINITY;
+    const bo = b.sort_order ?? Number.POSITIVE_INFINITY;
+    if (ao !== bo) return ao - bo;
+    return (a.created_at ?? "").localeCompare(b.created_at ?? "");
+  };
+
   const listItems = useMemo(
     () => items.filter((i) => i.shopping_list_id === listId),
     [items, listId],
   );
-  const pending = listItems.filter((i) => !i.is_checked);
-  const inCart = listItems.filter((i) => i.is_checked);
+  const pending = useMemo(() => listItems.filter((i) => !i.is_checked).slice().sort(sortFn), [listItems]);
+  const inCart = useMemo(() => listItems.filter((i) => i.is_checked).slice().sort(sortFn), [listItems]);
+
 
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
