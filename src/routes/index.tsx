@@ -54,10 +54,10 @@ function MasterListPage() {
   const [search, setSearch] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const [activeCat, setActiveCat] = useState<string>("__all__");
-  const [sortBy, setSortBy] = useState<"category" | "name_asc" | "name_desc" | "quantity">(() => {
+  const [sortBy, setSortBy] = useState<"category" | "name_asc" | "name_desc" | "date_added">(() => {
     if (typeof window === "undefined") return "category";
     const v = localStorage.getItem("familycart:master-sort");
-    return (v === "name_asc" || v === "name_desc" || v === "quantity" || v === "category") ? v : "category";
+    return (v === "name_asc" || v === "name_desc" || v === "date_added" || v === "category") ? v : "category";
   });
   const [sortOpen, setSortOpen] = useState(false);
   useEffect(() => {
@@ -112,7 +112,7 @@ function MasterListPage() {
     const arr = [...filteredProducts];
     if (sortBy === "name_asc") arr.sort((a, b) => a.name.localeCompare(b.name, "he"));
     else if (sortBy === "name_desc") arr.sort((a, b) => b.name.localeCompare(a.name, "he"));
-    else if (sortBy === "quantity") arr.sort((a, b) => b.default_quantity - a.default_quantity);
+    else if (sortBy === "date_added") arr.sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""));
     return arr;
   }, [filteredProducts, sortBy]);
 
@@ -185,7 +185,7 @@ function MasterListPage() {
                     { v: "name_asc", l: "לפי שם א-ת" },
                     { v: "name_desc", l: "לפי שם ת-א" },
                     { v: "category", l: "לפי קטגוריה" },
-                    { v: "quantity", l: "לפי כמות" },
+                    { v: "date_added", l: "לפי תאריך הוספה" },
                   ] as const).map((opt) => (
                     <button
                       key={opt.v}
