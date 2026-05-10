@@ -42,6 +42,7 @@ function ShoppingListsPage() {
   const [expandedHistory, setExpandedHistory] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ list: ShoppingList; isHistory: boolean } | null>(null);
   const [savedOpen, setSavedOpen] = useState(false);
+  const [notesEdit, setNotesEdit] = useState<{ list: ShoppingList; draft: string } | null>(null);
   const products = allProducts;
 
   const spaceLists = useMemo(
