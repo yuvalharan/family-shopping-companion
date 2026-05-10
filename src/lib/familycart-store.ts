@@ -405,6 +405,18 @@ export const actions = {
     if (error) toast.error("שגיאה בשמירה");
   },
 
+  async setListGroupByCategory(listId: string, value: boolean) {
+    state = { ...state, lists: state.lists.map((l) => (l.id === listId ? { ...l, group_by_category: value } : l)) }; emit();
+    const { error } = await supabase.from("shopping_lists").update({ group_by_category: value }).eq("id", listId);
+    if (error) toast.error("שגיאה בשמירה");
+  },
+
+  async setListCategoryOrder(listId: string, order: string[]) {
+    state = { ...state, lists: state.lists.map((l) => (l.id === listId ? { ...l, category_order: order } : l)) }; emit();
+    const { error } = await supabase.from("shopping_lists").update({ category_order: order }).eq("id", listId);
+    if (error) toast.error("שגיאה בשמירה");
+  },
+
 
   async removeItem(itemId: string) {
     const { error } = await supabase.from("shopping_items").delete().eq("id", itemId);
