@@ -369,12 +369,56 @@ export const actions = {
     const list = state.lists.find((l) => l.id === listId);
     const sid = list?.space_id ?? activeSpaceIdOrNull();
     if (!sid) return;
+    const maxOrder = state.items
+      .filter((i) => i.shopping_list_id === listId)
+      .reduce((m, i) => Math.max(m, i.sort_order ?? 0), 0);
+    const sort_order = maxOrder + 1000;
     const { data, error } = await supabase.from("shopping_items")
-      .insert({ shopping_list_id: listId, product_id: product.id, quantity_needed: qty, is_checked: false, user_id: uid, space_id: sid })
+      .insert({ shopping_list_id: listId, product_id: product.id, quantity_needed: qty, is_checked: false, user_id: uid, space_id: sid, sort_order })
       .select().single();
     if (error || !data) { toast.error("שגיאה בשמירה"); return; }
     state = { ...state, items: [...state.items, data as unknown as ShoppingItem] }; emit();
   },
+
+  async reorderItems(listId: string, orderedIds: string[]) {
+    // Assign new sort_order values with spacing
+    const updates = orderedIds.map((id, idx) => ({ id, sort_order: (idx + 1) * 1000 }));
+    const idToOrder = new Map(updates.map((u) => [u.id, u.sort_order]));
+    state = {
+      ...state,
+      items: state.items.map((i) =>
+        i.shopping_list_id === listId && idToOrder.has(i.id)
+          ? { ...i, sort_order: idToOrder.get(i.id)! }
+          : i,
+      ),
+    };
+    emit();
+    // Persist in parallel
+    await Promise.all(
+      updates.map((u) => supabase.from("shopping_items").update({ sort_order: u.sort_order }).eq("id", u.id)),
+    );
+  },
+
+  async setListNotes(listId: string, notes: string) {
+    const trimmed = notes.trim();
+    const value = trimmed.length > 0 ? trimmed : null;
+    state = { ...state, lists: state.lists.map((l) => (l.id === listId ? { ...l, notes: value } : l)) }; emit();
+    const { error } = await supabase.from("shopping_lists").update({ notes: value }).eq("id", listId);
+    if (error) toast.error("שגיאה בשמירה");
+  },
+
+  async setListGroupByCategory(listId: string, value: boolean) {
+    state = { ...state, lists: state.lists.map((l) => (l.id === listId ? { ...l, group_by_category: value } : l)) }; emit();
+    const { error } = await supabase.from("shopping_lists").update({ group_by_category: value }).eq("id", listId);
+    if (error) toast.error("שגיאה בשמירה");
+  },
+
+  async setListCategoryOrder(listId: string, order: string[]) {
+    state = { ...state, lists: state.lists.map((l) => (l.id === listId ? { ...l, category_order: order } : l)) }; emit();
+    const { error } = await supabase.from("shopping_lists").update({ category_order: order }).eq("id", listId);
+    if (error) toast.error("שגיאה בשמירה");
+  },
+
 
   async removeItem(itemId: string) {
     const { error } = await supabase.from("shopping_items").delete().eq("id", itemId);

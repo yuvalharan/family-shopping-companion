@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Pencil, Trash2, Search, X, Plus, ShoppingCart, PackagePlus, CirclePlus, Download } from "lucide-react";
+import { Pencil, Trash2, Search, X, Plus, ShoppingCart, PackagePlus, CirclePlus, Download, ArrowUpDown, Check } from "lucide-react";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/familycart/AppHeader";
 import { AddProductDialog } from "@/components/familycart/AddProductDialog";
@@ -54,6 +54,15 @@ function MasterListPage() {
   const [search, setSearch] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const [activeCat, setActiveCat] = useState<string>("__all__");
+  const [sortBy, setSortBy] = useState<"category" | "name_asc" | "name_desc" | "date_added">(() => {
+    if (typeof window === "undefined") return "category";
+    const v = localStorage.getItem("familycart:master-sort");
+    return (v === "name_asc" || v === "name_desc" || v === "date_added" || v === "category") ? v : "category";
+  });
+  const [sortOpen, setSortOpen] = useState(false);
+  useEffect(() => {
+    if (typeof window !== "undefined") localStorage.setItem("familycart:master-sort", sortBy);
+  }, [sortBy]);
 
 
   useEffect(() => {
@@ -78,12 +87,18 @@ function MasterListPage() {
     });
   };
 
-  const grouped = useMemo(() => {
+  const filteredProducts = useMemo(() => {
     const q = search.trim().toLowerCase();
+    return products.filter((p) => {
+      if (activeCat !== "__all__" && p.category !== activeCat) return false;
+      if (q && !p.name.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [products, search, activeCat]);
+
+  const grouped = useMemo(() => {
     const map = new Map<string, Product[]>();
-    for (const p of products) {
-      if (activeCat !== "__all__" && p.category !== activeCat) continue;
-      if (q && !p.name.toLowerCase().includes(q)) continue;
+    for (const p of filteredProducts) {
       if (!map.has(p.category)) map.set(p.category, []);
       map.get(p.category)!.push(p);
     }
@@ -91,7 +106,15 @@ function MasterListPage() {
       category: c,
       products: map.get(c)!,
     }));
-  }, [products, categories, search, activeCat]);
+  }, [filteredProducts, categories]);
+
+  const flatSorted = useMemo(() => {
+    const arr = [...filteredProducts];
+    if (sortBy === "name_asc") arr.sort((a, b) => a.name.localeCompare(b.name, "he"));
+    else if (sortBy === "name_desc") arr.sort((a, b) => b.name.localeCompare(a.name, "he"));
+    else if (sortBy === "date_added") arr.sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""));
+    return arr;
+  }, [filteredProducts, sortBy]);
 
   const isFiltering = search.trim().length > 0 || activeCat !== "__all__";
   const isEmpty = !loading && products.length === 0;
@@ -119,32 +142,62 @@ function MasterListPage() {
               </button>
             </div>
 
-            <div className="relative mx-auto w-3/5">
-              <Search className="size-4 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setTimeout(() => setSearchFocused(false), 150)}
-                placeholder="חיפוש מוצר..."
-                className="pr-9 pl-9 h-11 rounded-xl"
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch("")}
-                  aria-label="נקה חיפוש"
-                  className="absolute left-2 top-1/2 -translate-y-1/2 size-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted"
-                >
-                  <X className="size-4" />
-                </button>
-              )}
-              {searchFocused && search.trim().length > 0 && (
-                <ProductAutocomplete
-                  query={search}
-                  onPick={openAddWithPrefill}
-                  className="absolute z-50 top-full mt-1 w-full bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
+            <div className="mx-auto w-3/5 flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="size-4 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setTimeout(() => setSearchFocused(false), 150)}
+                  placeholder="חיפוש מוצר..."
+                  className="pr-9 pl-9 h-11 rounded-xl"
                 />
-              )}
+                {search && (
+                  <button
+                    onClick={() => setSearch("")}
+                    aria-label="נקה חיפוש"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 size-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted"
+                  >
+                    <X className="size-4" />
+                  </button>
+                )}
+                {searchFocused && search.trim().length > 0 && (
+                  <ProductAutocomplete
+                    query={search}
+                    onPick={openAddWithPrefill}
+                    className="absolute z-50 top-full mt-1 w-full bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
+                  />
+                )}
+              </div>
+              <Popover open={sortOpen} onOpenChange={setSortOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    aria-label="מיון"
+                    className="h-11 px-3 rounded-xl border border-input bg-background hover:bg-muted flex items-center gap-1.5 text-sm text-foreground shrink-0"
+                  >
+                    <ArrowUpDown className="size-4" />
+                    <span>מיון</span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="start" dir="rtl" className="w-56 p-1">
+                  {([
+                    { v: "category", l: "לפי קטגוריה" },
+                    { v: "date_added", l: "לפי תאריך הוספה" },
+                    { v: "name_asc", l: "לפי שם א-ת" },
+                    { v: "name_desc", l: "לפי שם ת-א" },
+                  ] as const).map((opt) => (
+                    <button
+                      key={opt.v}
+                      onClick={() => { setSortBy(opt.v); setSortOpen(false); }}
+                      className="w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm hover:bg-muted text-right"
+                    >
+                      <span>{opt.l}</span>
+                      {sortBy === opt.v && <Check className="size-4 text-primary" />}
+                    </button>
+                  ))}
+                </PopoverContent>
+              </Popover>
             </div>
 
 
@@ -184,55 +237,62 @@ function MasterListPage() {
             </div>
           </div>
         )}
-        {!loading && !isEmpty && grouped.length === 0 && (
+        {!loading && !isEmpty && filteredProducts.length === 0 && (
           <p className="text-center text-muted-foreground mt-12">לא נמצאו מוצרים</p>
         )}
-        {grouped.map(({ category, products }) => {
-          const isOpen = isFiltering || expanded.has(category);
-          return (
-            <section key={category}>
-              <button
-                onClick={() => toggle(category)}
-                className="w-full text-right bg-surface rounded-2xl shadow-soft px-4 py-3 mb-3 font-bold text-foreground hover:bg-muted transition-colors border border-foreground"
-                aria-expanded={isOpen}
-              >
-                {category}
-              </button>
-              {isOpen && (
-                <div className="space-y-2.5">
-                  {products.map((p) => (
-                    <div
-                      key={p.id}
-                      className="bg-surface rounded-2xl shadow-soft p-4 flex items-center justify-between gap-3"
-                    >
-                      <div className="min-w-0">
-                        <div className="font-medium truncate">{p.name}</div>
-                        <InlineQuantity product={p} />
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <QuickAddPopover product={p} activeLists={activeLists} />
-                        <button
-                          onClick={() => setEditProduct(p)}
-                          className="size-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted flex items-center justify-center transition-colors"
-                          aria-label="ערוך מוצר"
-                        >
-                          <Pencil className="size-4" />
-                        </button>
-                        <button
-                          onClick={() => setDeleteProduct(p)}
-                          className="size-9 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex items-center justify-center transition-colors"
-                          aria-label="מחק מוצר"
-                        >
-                          <Trash2 className="size-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
+        {(() => {
+          const renderCard = (p: Product) => (
+            <div
+              key={p.id}
+              className="bg-surface rounded-2xl shadow-soft p-4 flex items-center justify-between gap-3"
+            >
+              <div className="min-w-0">
+                <div className="font-medium truncate">{p.name}</div>
+                <InlineQuantity product={p} />
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <QuickAddPopover product={p} activeLists={activeLists} />
+                <button
+                  onClick={() => setEditProduct(p)}
+                  className="size-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted flex items-center justify-center transition-colors"
+                  aria-label="ערוך מוצר"
+                >
+                  <Pencil className="size-4" />
+                </button>
+                <button
+                  onClick={() => setDeleteProduct(p)}
+                  className="size-9 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex items-center justify-center transition-colors"
+                  aria-label="מחק מוצר"
+                >
+                  <Trash2 className="size-4" />
+                </button>
+              </div>
+            </div>
           );
-        })}
+
+          if (sortBy === "category") {
+            return grouped.map(({ category, products }) => {
+              const isOpen = isFiltering || expanded.has(category);
+              return (
+                <section key={category}>
+                  <button
+                    onClick={() => toggle(category)}
+                    className="w-full text-right bg-surface rounded-2xl shadow-soft px-4 py-3 mb-3 font-bold text-foreground hover:bg-muted transition-colors border border-foreground"
+                    aria-expanded={isOpen}
+                  >
+                    {category}
+                  </button>
+                  {isOpen && (
+                    <div className="space-y-2.5">
+                      {products.map(renderCard)}
+                    </div>
+                  )}
+                </section>
+              );
+            });
+          }
+          return <div className="space-y-2.5">{flatSorted.map(renderCard)}</div>;
+        })()}
       </main>
       {isEmpty ? (
         <AddProductDialog open={addOpen} onOpenChange={(v) => { setAddOpen(v); if (!v) setPrefill(null); }} prefill={prefill ?? undefined} />

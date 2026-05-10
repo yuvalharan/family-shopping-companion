@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus, ShoppingCart, ChevronDown, Trash2, Bookmark } from "lucide-react";
+import { Plus, ShoppingCart, ChevronDown, Trash2, Bookmark, StickyNote } from "lucide-react";
 import { SavedListsDialog } from "@/components/familycart/SavedListsDialog";
 import { SpaceBadge } from "@/components/familycart/SpacesUI";
 import { formatQuantity } from "@/lib/units";
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -41,6 +42,7 @@ function ShoppingListsPage() {
   const [expandedHistory, setExpandedHistory] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ list: ShoppingList; isHistory: boolean } | null>(null);
   const [savedOpen, setSavedOpen] = useState(false);
+  const [notesEdit, setNotesEdit] = useState<{ list: ShoppingList; draft: string } | null>(null);
   const products = allProducts;
 
   const spaceLists = useMemo(
@@ -154,10 +156,27 @@ function ShoppingListsPage() {
                             <div className="text-sm text-muted-foreground mt-0.5">
                               {s.total} פריטים · {s.checked} בעגלה
                             </div>
+                            {list.notes && (
+                              <div className="text-xs text-muted-foreground mt-1 truncate italic">
+                                {list.notes}
+                              </div>
+                            )}
                           </div>
                           <div className="text-primary text-sm font-medium shrink-0">פתח</div>
                         </div>
                       </Link>
+                      <button
+                        onClick={() => setNotesEdit({ list, draft: list.notes ?? "" })}
+                        aria-label="הערות לרשימה"
+                        className={
+                          "size-9 rounded-xl flex items-center justify-center transition-colors shrink-0 " +
+                          (list.notes
+                            ? "text-primary hover:bg-primary/10"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted")
+                        }
+                      >
+                        <StickyNote className="size-4" />
+                      </button>
                       <button
                         onClick={() => setConfirmDelete({ list, isHistory: false })}
                         aria-label="מחק רשימה"
@@ -310,6 +329,37 @@ function ShoppingListsPage() {
       </AlertDialog>
 
       <SavedListsDialog open={savedOpen} onOpenChange={setSavedOpen} />
+
+      <Dialog open={!!notesEdit} onOpenChange={(v) => { if (!v) setNotesEdit(null); }}>
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-right">הערות לרשימה</DialogTitle>
+          </DialogHeader>
+          {notesEdit && (
+            <Textarea
+              autoFocus
+              value={notesEdit.draft}
+              onChange={(e) => setNotesEdit({ ...notesEdit, draft: e.target.value })}
+              placeholder="לדוגמה: לקנות לפני שישי, לא לשכוח קופון"
+              className="min-h-32 text-right"
+              dir="rtl"
+            />
+          )}
+          <DialogFooter className="sm:justify-start gap-2">
+            <Button
+              onClick={() => {
+                if (notesEdit) {
+                  void actions.setListNotes(notesEdit.list.id, notesEdit.draft);
+                }
+                setNotesEdit(null);
+              }}
+            >
+              שמור
+            </Button>
+            <Button variant="ghost" onClick={() => setNotesEdit(null)}>ביטול</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
