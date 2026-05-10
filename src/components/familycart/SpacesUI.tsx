@@ -106,6 +106,8 @@ export function SettingsPanelButton() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [spaceSettings, setSpaceSettings] = useState<SharedSpace | null>(null);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const { spaces } = useFamilyCart();
   const navigate = useNavigate();
 
@@ -113,6 +115,19 @@ export function SettingsPanelButton() {
     await supabase.auth.signOut();
     setOpen(false);
     navigate({ to: "/login" });
+  };
+
+  const onDeleteAccount = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setDeleting(true);
+    const ok = await actions.deleteAccount();
+    if (ok) {
+      navigate({ to: "/login" });
+    } else {
+      setDeleting(false);
+      setDeleteAccountOpen(false);
+      toast.error("שגיאה במחיקת החשבון");
+    }
   };
 
   return (
@@ -158,9 +173,36 @@ export function SettingsPanelButton() {
             <Button variant="outline" className="w-full" onClick={onLogout}>
               <LogOut className="size-4 ml-1" /> התנתק
             </Button>
+            <Button
+              variant="outline"
+              className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+              onClick={() => { setDeleteAccountOpen(true); setOpen(false); }}
+            >
+              <Trash2 className="size-4 ml-1" /> מחק חשבון
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
+      <AlertDialog open={deleteAccountOpen} onOpenChange={setDeleteAccountOpen}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-right">מחיקת חשבון</AlertDialogTitle>
+            <AlertDialogDescription className="text-right">
+              האם אתה בטוח? פעולה זו תמחק את כל הנתונים שלך לצמיתות
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-start gap-2">
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleting}
+              onClick={onDeleteAccount}
+            >
+              {deleting ? "מוחק..." : "מחק לצמיתות"}
+            </AlertDialogAction>
+            <AlertDialogCancel disabled={deleting}>ביטול</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <CreateSpaceDialog open={inviteOpen} onOpenChange={setInviteOpen} />
       <ManageCategoriesDialog open={categoriesOpen} onOpenChange={setCategoriesOpen} />
       {spaceSettings && (

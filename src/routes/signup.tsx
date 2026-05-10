@@ -76,6 +76,9 @@ function SignupPage() {
               <Button type="submit" className="w-full" disabled={submitting}>
                 {submitting ? "נרשם..." : "הירשם"}
               </Button>
+              <p className="text-center text-xs text-muted-foreground">
+                בהרשמה אתה מסכים לשמירת הנתונים שלך לצורך פעולת האפליקציה
+              </p>
             </form>
             <p className="text-center text-sm text-muted-foreground">
               יש לך חשבון? <Link to="/login" className="text-primary font-medium">התחבר</Link>

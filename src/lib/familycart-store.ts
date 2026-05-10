@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { deleteAuthUserFn } from "./deleteAccount.server";
 import { CATEGORIES } from "./familycart-data";
 import type { Product, SavedList, SavedListItem, SharedSpace, ShoppingItem, ShoppingList, Unit } from "./familycart-data";
 
@@ -704,5 +705,52 @@ export const actions = {
     const { data, error } = await supabase.rpc("get_space_members", { _space_id: spaceId });
     if (error) return [];
     return (data ?? []) as Array<{ user_id: string; email: string; joined_at: string; is_owner: boolean }>;
+  },
+
+  async deleteAccount(): Promise<boolean> {
+    const uid = await getUserId();
+    if (!uid) return false;
+
+    try {
+      // Handle owned non-personal shared spaces: transfer ownership or delete
+      const ownedShared = state.spaces.filter((s) => !s.is_personal && s.owner_id === uid);
+      for (const space of ownedShared) {
+        const members = await actions.getSpaceMembers(space.id);
+        const others = members.filter((m) => m.user_id !== uid);
+        if (others.length > 0) {
+          await supabase.from("shared_spaces").update({ owner_id: others[0].user_id }).eq("id", space.id);
+        } else {
+          await supabase.from("shared_spaces").delete().eq("id", space.id);
+        }
+      }
+
+      // Remove user from all remaining shared spaces
+      await supabase.from("space_members").delete().eq("user_id", uid);
+
+      // Delete all personal space data
+      const personal = state.spaces.find((s) => s.is_personal);
+      if (personal) {
+        const pid = personal.id;
+        await supabase.from("shopping_items").delete().eq("space_id", pid);
+        await supabase.from("saved_list_items").delete().eq("space_id", pid);
+        await supabase.from("shopping_lists").delete().eq("space_id", pid);
+        await supabase.from("saved_lists").delete().eq("space_id", pid);
+        await supabase.from("products").delete().eq("space_id", pid);
+        await supabase.from("categories").delete().eq("space_id", pid);
+        await supabase.from("shared_spaces").delete().eq("id", pid);
+      }
+
+      // Delete the auth user via server function (requires service role)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        await deleteAuthUserFn({ data: { token: session.access_token } });
+      }
+
+      await supabase.auth.signOut();
+      return true;
+    } catch (err) {
+      console.error("deleteAccount error:", err);
+      return false;
+    }
   },
 };

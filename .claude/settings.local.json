@@ -14,7 +14,11 @@
       "Bash(Select-String -Pattern \"ready|error|Local|Network|VITE\" --SimpleMatch)",
       "Bash(npx supabase *)",
       "Bash(Get-ChildItem -Path C:\\\\Users\\\\yuval\\\\OneDrive\\\\Desktop\\\\vibe-coding\\\\shopping-app\\\\family-shopping-companion -Recurse -Name -Include *supabase* -ErrorAction SilentlyContinue)",
-      "Bash(Select-Object -First 50)"
+      "Bash(Select-Object -First 50)",
+      "Bash(Get-ChildItem -Recurse -Path \"C:\\\\Users\\\\yuval\\\\OneDrive\\\\Desktop\\\\vibe-coding\\\\shopping-app\\\\family-shopping-companion\\\\src\" -Filter \"*.tsx\" -ErrorAction SilentlyContinue)",
+      "Bash(grep -E \"\\\\.\\(tsx|ts|jsx\\)$\")",
+      "Bash(xargs grep -l \"account\\\\|Account\\\\|profile\\\\|Profile\\\\|user\\\\|User\")",
+      "Bash(node -e \"const m = require\\('./node_modules/@tanstack/react-start/dist/cjs/index.cjs'\\); console.log\\(Object.keys\\(m\\).filter\\(k => k.includes\\('Server'\\) || k.includes\\('server'\\)\\).join\\('\\\\n'\\)\\)\")"
     ]
   }
 }
