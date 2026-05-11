@@ -134,40 +134,41 @@ function SharedListPage() {
   const renderItem = (item: Item) => {
     const product = products.get(item.product_id);
     if (!product) return null;
+    const checked = item.is_checked;
     return (
-      <button
+      <div
         key={item.id}
-        onClick={() => toggle(item)}
-        className="w-full flex items-center gap-3 rounded-2xl bg-card border p-3 text-right hover:bg-muted/40 transition-colors"
+        className={
+          "rounded-2xl shadow-soft p-4 flex items-start gap-3 transition-colors " +
+          (checked ? "bg-green-100 dark:bg-green-900/30 opacity-70" : "bg-surface")
+        }
       >
-        <div
-          className={`size-6 rounded-md border-2 flex items-center justify-center shrink-0 ${
-            item.is_checked
-              ? "bg-primary border-primary text-primary-foreground"
-              : "border-muted-foreground/40"
-          }`}
-        >
-          {item.is_checked && <Check className="size-4" />}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div
-            className={`font-medium truncate ${item.is_checked ? "line-through text-muted-foreground" : ""}`}
-          >
-            {product.name}
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={() => toggle(item)}
+          className="size-5 accent-primary shrink-0 mt-0.5"
+          aria-label="סמן כנאסף"
+        />
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <div className="font-medium truncate">{product.name}</div>
+          <div className="flex items-center gap-1.5">
+            <span className="inline-flex items-center justify-center min-w-9 h-7 px-2 text-sm rounded-md border border-input bg-muted text-foreground">
+              {formatQuantity(item.quantity_needed, product.unit).value}
+            </span>
+            <span className="text-sm text-muted-foreground">
+              {formatQuantity(item.quantity_needed, product.unit).unit}
+            </span>
           </div>
-          <div className="text-xs text-muted-foreground">
-            {(() => {
-              const q = formatQuantity(item.quantity_needed, product.unit);
-              return `${q.value} ${q.unit}`;
-            })()}
-            {item.notes ? ` · ${item.notes}` : ""}
-          </div>
+          {item.notes && (
+            <div className="text-xs text-muted-foreground">{item.notes}</div>
+          )}
         </div>
-      </button>
+      </div>
     );
   };
 
-  let pendingContent: React.ReactNode;
+  let pendingContent: React.ReactNode = null;
   if (pending.length > 0) {
     const grouped = new Map<string, Item[]>();
     pending.forEach((i) => {
@@ -183,16 +184,20 @@ function SharedListPage() {
     );
     pendingContent = (
       <div className="space-y-4">
-        {cats.map((cat) => (
-          <div key={cat} className="space-y-2">
-            <h3 className="font-bold text-sm text-muted-foreground px-1">{cat}</h3>
-            <div className="space-y-2">{grouped.get(cat)!.map(renderItem)}</div>
-          </div>
-        ))}
+        {cats.map((cat) => {
+          const catItems = grouped.get(cat)!;
+          return (
+            <div key={cat} className="space-y-2.5">
+              <div className="flex items-center gap-2 px-1">
+                <h3 className="text-base font-bold">{cat}</h3>
+                <span className="text-xs text-muted-foreground">({catItems.length})</span>
+              </div>
+              <div className="space-y-2.5">{catItems.map(renderItem)}</div>
+            </div>
+          );
+        })}
       </div>
     );
-  } else {
-    pendingContent = null;
   }
 
   return (
@@ -201,25 +206,25 @@ function SharedListPage() {
         רשימה משותפת — צפייה בלבד. סמן פריטים שנאספו
       </div>
       <main className="mx-auto max-w-xl px-4 py-5 space-y-5">
-        <h1 className="text-2xl font-bold">{list.name}</h1>
+        <h1 className="text-xl font-bold">{list.name}</h1>
         {list.notes && (
           <p className="text-sm text-muted-foreground italic">{list.notes}</p>
         )}
-        <div className="text-base font-semibold">
+        <div className="text-xl font-bold">
           {pending.length === 0 ? "הכל נאסף! 🛒" : `${pending.length} פריטים נותרו`}
         </div>
 
         {pending.length > 0 && (
-          <section className="space-y-2">
-            <h2 className="font-bold">לקנייה</h2>
+          <section className="space-y-2.5">
+            <h2 className="text-sm font-semibold text-muted-foreground">לקנייה</h2>
             {pendingContent}
           </section>
         )}
 
         {inCart.length > 0 && (
-          <section className="space-y-2">
-            <h2 className="font-bold text-muted-foreground">בעגלה</h2>
-            <div className="space-y-2">{inCart.map(renderItem)}</div>
+          <section className="space-y-2.5">
+            <h2 className="text-sm font-semibold text-muted-foreground">בעגלה</h2>
+            <div className="space-y-2.5">{inCart.map(renderItem)}</div>
           </section>
         )}
 
