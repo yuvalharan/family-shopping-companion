@@ -46,6 +46,37 @@ const listeners = new Set<() => void>();
 function emit() { listeners.forEach((l) => l()); }
 
 let realtimeChannel: ReturnType<typeof supabase.channel> | null = null;
+let pollInterval: ReturnType<typeof setInterval> | null = null;
+
+async function pollCoreData() {
+  if (!currentUserId) return;
+  const [productsRes, itemsRes, listsRes, categoriesRes] = await Promise.all([
+    supabase.from("products").select("*").order("created_at", { ascending: true }),
+    supabase.from("shopping_items").select("*").order("created_at", { ascending: true }),
+    supabase.from("shopping_lists").select("*").order("created_at", { ascending: false }),
+    supabase.from("categories").select("name,space_id").order("created_at", { ascending: true }),
+  ]);
+  const dbCats = (categoriesRes.data ?? []) as Array<{ name: string; space_id: string }>;
+  const catsBySpace: Record<string, string[]> = {};
+  dbCats.forEach((r) => { (catsBySpace[r.space_id] ??= []).push(r.name); });
+  state = {
+    ...state,
+    products: (productsRes.data ?? []) as unknown as Product[],
+    items: (itemsRes.data ?? []) as unknown as ShoppingItem[],
+    lists: (listsRes.data ?? []) as unknown as ShoppingList[],
+    categoriesBySpace: catsBySpace,
+  };
+  emit();
+}
+
+function startPolling() {
+  if (pollInterval) return;
+  pollInterval = setInterval(pollCoreData, 10_000);
+}
+
+function stopPolling() {
+  if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+}
 
 function startRealtimeSync() {
   if (realtimeChannel) return;
@@ -107,8 +138,8 @@ function stopRealtimeSync() {
 
 function subscribe(cb: () => void) {
   listeners.add(cb);
-  if (listeners.size === 1) startRealtimeSync();
-  return () => { listeners.delete(cb); if (listeners.size === 0) stopRealtimeSync(); };
+  if (listeners.size === 1) { startRealtimeSync(); startPolling(); }
+  return () => { listeners.delete(cb); if (listeners.size === 0) { stopRealtimeSync(); stopPolling(); } };
 }
 const getSnapshot = () => state;
 
