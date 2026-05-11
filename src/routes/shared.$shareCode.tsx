@@ -168,7 +168,7 @@ function SharedListPage() {
   };
 
   let pendingContent: React.ReactNode;
-  if (list.group_by_category && pending.length > 0) {
+  if (pending.length > 0) {
     const grouped = new Map<string, Item[]>();
     pending.forEach((i) => {
       const cat = products.get(i.product_id)?.category ?? "אחר";
@@ -192,7 +192,7 @@ function SharedListPage() {
       </div>
     );
   } else {
-    pendingContent = <div className="space-y-2">{pending.map(renderItem)}</div>;
+    pendingContent = null;
   }
 
   return (
