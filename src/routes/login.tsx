@@ -29,10 +29,16 @@ function LoginPage() {
     e.preventDefault();
     setError("");
     setSubmitting(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setSubmitting(false);
-    if (error) setError(translateAuthError(error.message));
-    else navigate({ to: "/" });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) setError(translateAuthError(error.message));
+      // Navigation is handled by the useEffect above once onAuthStateChange
+      // fires and user is set — navigating here races with AuthGate.
+    } catch (err) {
+      setError(translateAuthError(err instanceof Error ? err.message : "שגיאת רשת"));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const onGoogle = async () => {

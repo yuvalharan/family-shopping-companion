@@ -29,20 +29,24 @@ function SignupPage() {
     e.preventDefault();
     setError("");
     setSubmitting(true);
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: window.location.origin },
-    });
-    setSubmitting(false);
-    if (error) {
-      setError(translateAuthError(error.message));
-      return;
-    }
-    if (data.session) {
-      navigate({ to: "/" });
-    } else {
-      setDone(true);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: window.location.origin },
+      });
+      if (error) {
+        setError(translateAuthError(error.message));
+      } else if (!data.session) {
+        // Email confirmation required — no session yet.
+        setDone(true);
+      }
+      // If data.session exists, onAuthStateChange fires and the useEffect
+      // above navigates to "/" once user is set, avoiding the race with AuthGate.
+    } catch (err) {
+      setError(translateAuthError(err instanceof Error ? err.message : "שגיאת רשת"));
+    } finally {
+      setSubmitting(false);
     }
   };
 
