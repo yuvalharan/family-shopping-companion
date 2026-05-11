@@ -91,7 +91,7 @@ function AuthGate() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
-  const isPublic = pathname === "/login" || pathname === "/signup";
+  const isPublic = pathname === "/login" || pathname === "/signup" || pathname.startsWith("/shared/");
 
   useEffect(() => {
     if (loading) return;
