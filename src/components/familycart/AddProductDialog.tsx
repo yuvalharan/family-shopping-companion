@@ -296,32 +296,32 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
       </AlertDialogContent>
     </AlertDialog>
   );
-        )}
-        <Button variant="ghost" onClick={() => handleOpenChange(false)}>ביטול</Button>
-      </DialogFooter>
-    </DialogContent>
-  );
-
   if (isEdit || controlledOpen !== undefined) {
     return (
-      <Dialog open={open} onOpenChange={handleOpenChange}>
-        {content}
-      </Dialog>
+      <>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
+          {content}
+        </Dialog>
+        {dupDialog}
+      </>
     );
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button
-          size="lg"
-          className="fixed bottom-5 inset-x-4 mx-auto max-w-lg z-30 h-14 rounded-2xl text-base font-semibold shadow-lift"
-        >
-          <Plus className="size-5 ms-1" />
-          הוסף מוצר חדש
-        </Button>
-      </DialogTrigger>
-      {content}
-    </Dialog>
+    <>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogTrigger asChild>
+          <Button
+            size="lg"
+            className="fixed bottom-5 inset-x-4 mx-auto max-w-lg z-30 h-14 rounded-2xl text-base font-semibold shadow-lift"
+          >
+            <Plus className="size-5 ms-1" />
+            הוסף מוצר חדש
+          </Button>
+        </DialogTrigger>
+        {content}
+      </Dialog>
+      {dupDialog}
+    </>
   );
 }
