@@ -258,10 +258,44 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
             <Button onClick={() => submit(false)} disabled={!name.trim()}>
               הוסף וסגור
             </Button>
-            <Button onClick={() => submit(true)} disabled={!name.trim()} variant="secondary">
+            <Button
+              onClick={() => submit(true)}
+              disabled={!name.trim()}
+              className="bg-green-200 text-green-900 hover:bg-green-300 dark:bg-green-900/40 dark:text-green-100 dark:hover:bg-green-900/60"
+            >
               הוסף והמשך
             </Button>
           </>
+        )}
+        <Button variant="ghost" onClick={() => handleOpenChange(false)}>ביטול</Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+
+  const dupDialog = (
+    <AlertDialog open={!!dupConfirm} onOpenChange={(v) => { if (!v) setDupConfirm(null); }}>
+      <AlertDialogContent dir="rtl">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-right">מוצר כבר קיים</AlertDialogTitle>
+          <AlertDialogDescription className="text-right">
+            מוצר בשם זה כבר קיים ברשימה — האם להוסיף בכל זאת?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="sm:justify-start gap-2">
+          <AlertDialogAction
+            onClick={async () => {
+              const keepOpen = dupConfirm?.keepOpen ?? false;
+              setDupConfirm(null);
+              await performSubmit(keepOpen);
+            }}
+          >
+            הוסף בכל זאת
+          </AlertDialogAction>
+          <AlertDialogCancel>ביטול</AlertDialogCancel>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
         )}
         <Button variant="ghost" onClick={() => handleOpenChange(false)}>ביטול</Button>
       </DialogFooter>
