@@ -94,16 +94,25 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
     setNewCatName("");
   };
 
-  const submit = async () => {
+  const submit = async (keepOpen = false) => {
     if (!name.trim()) return;
     const safeQty = qty > 0 ? qty : 1;
     if (isEdit && product) {
       await actions.updateProduct(product.id, { name: name.trim(), category, default_quantity: safeQty, unit });
-    } else {
-      const saved = await actions.addProduct({ name: name.trim(), category, default_quantity: safeQty, unit });
-      if (saved) onProductAdded?.(saved);
+      handleOpenChange(false);
+      return;
     }
-    handleOpenChange(false);
+    const saved = await actions.addProduct({ name: name.trim(), category, default_quantity: safeQty, unit });
+    if (saved) onProductAdded?.(saved);
+    if (keepOpen) {
+      setName("");
+      setQty(1);
+      setUnit("יחידות");
+      setNameFocused(false);
+      setTimeout(() => nameInputRef.current?.focus(), 0);
+    } else {
+      handleOpenChange(false);
+    }
   };
 
   const content = (
