@@ -151,8 +151,8 @@ function MasterListPage() {
               </button>
             </div>
 
-            <div className="mx-auto w-3/5 flex items-center gap-2">
-              <div className="relative flex-1">
+            <div className="mx-auto w-3/5">
+              <div className="relative">
                 <Search className="size-4 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                 <Input
                   value={search}
@@ -179,6 +179,9 @@ function MasterListPage() {
                   />
                 )}
               </div>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
               <Popover open={sortOpen} onOpenChange={setSortOpen}>
                 <PopoverTrigger asChild>
                   <button
@@ -208,18 +211,18 @@ function MasterListPage() {
                 </PopoverContent>
               </Popover>
               {sortBy === "category" && grouped.length > 0 && (() => {
-                const allExpanded = grouped.every((g) => expanded.has(g.category));
+                const anyExpanded = grouped.some((g) => expanded.has(g.category));
                 return (
                   <button
                     onClick={() => {
-                      if (allExpanded) setExpanded(new Set());
+                      if (anyExpanded) setExpanded(new Set());
                       else setExpanded(new Set(grouped.map((g) => g.category)));
                     }}
-                    aria-label={allExpanded ? "כווץ הכל" : "פתח הכל"}
+                    aria-label={anyExpanded ? "כווץ הכל" : "פתח הכל"}
                     className="h-11 px-3 rounded-xl border border-input bg-background hover:bg-muted flex items-center gap-1.5 text-sm text-foreground shrink-0"
                   >
-                    {allExpanded ? <ChevronsDownUp className="size-4" /> : <ChevronsUpDown className="size-4" />}
-                    <span>{allExpanded ? "כווץ הכל" : "פתח הכל"}</span>
+                    {anyExpanded ? <ChevronsDownUp className="size-4" /> : <ChevronsUpDown className="size-4" />}
+                    <span>{anyExpanded ? "כווץ הכל" : "פתח הכל"}</span>
                   </button>
                 );
               })()}
