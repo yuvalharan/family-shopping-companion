@@ -195,12 +195,21 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
               id="prod-qty"
               type="number"
               inputMode="decimal"
-              step="any"
+              step={quantityStep(unit)}
               min={0}
               value={qty}
               onChange={(e) => {
                 const n = parseFloat(e.target.value);
                 setQty(Number.isFinite(n) && n > 0 ? n : 0);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setQty(nextQuantity(qty, unit, 1));
+                } else if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setQty(nextQuantity(qty, unit, -1));
+                }
               }}
             />
           </div>
