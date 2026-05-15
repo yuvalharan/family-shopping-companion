@@ -24,6 +24,7 @@ import {
 import { type Product, type Unit } from "@/lib/familycart-data";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
 import { formatQuantity } from "@/lib/units";
+import { nextQuantity, quantityStep } from "@/lib/quantity-steps";
 import { useAuth } from "@/lib/auth";
 
 
