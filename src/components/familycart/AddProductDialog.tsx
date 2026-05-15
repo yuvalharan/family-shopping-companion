@@ -8,6 +8,7 @@ import { Plus } from "lucide-react";
 import { UNITS, type Unit, type Product } from "@/lib/familycart-data";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
 import { ProductAutocomplete } from "@/components/familycart/ProductAutocomplete";
+import { nextQuantity, quantityStep } from "@/lib/quantity-steps";
 
 
 const ADD_NEW_SENTINEL = "__add_new__";
