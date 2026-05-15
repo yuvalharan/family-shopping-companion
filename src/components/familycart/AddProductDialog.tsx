@@ -1,5 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +32,8 @@ type Props = {
 };
 
 export function AddProductDialog({ product, open: controlledOpen, onOpenChange, prefill, onProductAdded }: Props) {
-  const { categories } = useFamilyCart();
+  const { categories, products } = useFamilyCart();
+  const [dupConfirm, setDupConfirm] = useState<{ keepOpen: boolean } | null>(null);
   const isEdit = !!product;
 
   const [internalOpen, setInternalOpen] = useState(false);
@@ -94,14 +105,8 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
     setNewCatName("");
   };
 
-  const submit = async (keepOpen = false) => {
-    if (!name.trim()) return;
+  const performSubmit = async (keepOpen: boolean) => {
     const safeQty = qty > 0 ? qty : 1;
-    if (isEdit && product) {
-      await actions.updateProduct(product.id, { name: name.trim(), category, default_quantity: safeQty, unit });
-      handleOpenChange(false);
-      return;
-    }
     const saved = await actions.addProduct({ name: name.trim(), category, default_quantity: safeQty, unit });
     if (saved) onProductAdded?.(saved);
     if (keepOpen) {
@@ -113,6 +118,23 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
     } else {
       handleOpenChange(false);
     }
+  };
+
+  const submit = async (keepOpen = false) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    if (isEdit && product) {
+      const safeQty = qty > 0 ? qty : 1;
+      await actions.updateProduct(product.id, { name: trimmed, category, default_quantity: safeQty, unit });
+      handleOpenChange(false);
+      return;
+    }
+    const exists = products.some((p) => p.name.trim().toLowerCase() === trimmed.toLowerCase());
+    if (exists) {
+      setDupConfirm({ keepOpen });
+      return;
+    }
+    await performSubmit(keepOpen);
   };
 
   const content = (
@@ -236,7 +258,11 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
             <Button onClick={() => submit(false)} disabled={!name.trim()}>
               הוסף וסגור
             </Button>
-            <Button onClick={() => submit(true)} disabled={!name.trim()} variant="secondary">
+            <Button
+              onClick={() => submit(true)}
+              disabled={!name.trim()}
+              className="bg-green-200 text-green-900 hover:bg-green-300 dark:bg-green-900/40 dark:text-green-100 dark:hover:bg-green-900/60"
+            >
               הוסף והמשך
             </Button>
           </>
@@ -246,26 +272,56 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
     </DialogContent>
   );
 
+  const dupDialog = (
+    <AlertDialog open={!!dupConfirm} onOpenChange={(v) => { if (!v) setDupConfirm(null); }}>
+      <AlertDialogContent dir="rtl">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-right">מוצר כבר קיים</AlertDialogTitle>
+          <AlertDialogDescription className="text-right">
+            מוצר בשם זה כבר קיים ברשימה — האם להוסיף בכל זאת?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="sm:justify-start gap-2">
+          <AlertDialogAction
+            onClick={async () => {
+              const keepOpen = dupConfirm?.keepOpen ?? false;
+              setDupConfirm(null);
+              await performSubmit(keepOpen);
+            }}
+          >
+            הוסף בכל זאת
+          </AlertDialogAction>
+          <AlertDialogCancel>ביטול</AlertDialogCancel>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
   if (isEdit || controlledOpen !== undefined) {
     return (
-      <Dialog open={open} onOpenChange={handleOpenChange}>
-        {content}
-      </Dialog>
+      <>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
+          {content}
+        </Dialog>
+        {dupDialog}
+      </>
     );
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button
-          size="lg"
-          className="fixed bottom-5 inset-x-4 mx-auto max-w-lg z-30 h-14 rounded-2xl text-base font-semibold shadow-lift"
-        >
-          <Plus className="size-5 ms-1" />
-          הוסף מוצר חדש
-        </Button>
-      </DialogTrigger>
-      {content}
-    </Dialog>
+    <>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogTrigger asChild>
+          <Button
+            size="lg"
+            className="fixed bottom-5 inset-x-4 mx-auto max-w-lg z-30 h-14 rounded-2xl text-base font-semibold shadow-lift"
+          >
+            <Plus className="size-5 ms-1" />
+            הוסף מוצר חדש
+          </Button>
+        </DialogTrigger>
+        {content}
+      </Dialog>
+      {dupDialog}
+    </>
   );
 }
