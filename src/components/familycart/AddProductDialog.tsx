@@ -32,7 +32,8 @@ type Props = {
 };
 
 export function AddProductDialog({ product, open: controlledOpen, onOpenChange, prefill, onProductAdded }: Props) {
-  const { categories } = useFamilyCart();
+  const { categories, products } = useFamilyCart();
+  const [dupConfirm, setDupConfirm] = useState<{ keepOpen: boolean } | null>(null);
   const isEdit = !!product;
 
   const [internalOpen, setInternalOpen] = useState(false);
