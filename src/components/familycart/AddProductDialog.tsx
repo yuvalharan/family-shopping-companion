@@ -42,6 +42,7 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
   const [newCatError, setNewCatError] = useState<string | null>(null);
   const [savingCat, setSavingCat] = useState(false);
   const newCatInputRef = useRef<HTMLInputElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
