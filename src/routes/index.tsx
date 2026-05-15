@@ -45,6 +45,7 @@ function MasterListPage() {
   const { user } = useAuth();
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   
   const [addOpen, setAddOpen] = useState(false);
   const [prefill, setPrefill] = useState<ProductSuggestion | null>(null);
