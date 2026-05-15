@@ -105,14 +105,8 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
     setNewCatName("");
   };
 
-  const submit = async (keepOpen = false) => {
-    if (!name.trim()) return;
+  const performSubmit = async (keepOpen: boolean) => {
     const safeQty = qty > 0 ? qty : 1;
-    if (isEdit && product) {
-      await actions.updateProduct(product.id, { name: name.trim(), category, default_quantity: safeQty, unit });
-      handleOpenChange(false);
-      return;
-    }
     const saved = await actions.addProduct({ name: name.trim(), category, default_quantity: safeQty, unit });
     if (saved) onProductAdded?.(saved);
     if (keepOpen) {
@@ -124,6 +118,23 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
     } else {
       handleOpenChange(false);
     }
+  };
+
+  const submit = async (keepOpen = false) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    if (isEdit && product) {
+      const safeQty = qty > 0 ? qty : 1;
+      await actions.updateProduct(product.id, { name: trimmed, category, default_quantity: safeQty, unit });
+      handleOpenChange(false);
+      return;
+    }
+    const exists = products.some((p) => p.name.trim().toLowerCase() === trimmed.toLowerCase());
+    if (exists) {
+      setDupConfirm({ keepOpen });
+      return;
+    }
+    await performSubmit(keepOpen);
   };
 
   const content = (
