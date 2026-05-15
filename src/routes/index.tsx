@@ -398,6 +398,55 @@ function MasterListPage() {
   );
 }
 
+function InlineName({ product }: { product: Product }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(product.name);
+
+  const start = () => {
+    setValue(product.name);
+    setEditing(true);
+  };
+
+  const commit = () => {
+    const trimmed = value.trim();
+    setEditing(false);
+    if (trimmed && trimmed !== product.name) {
+      actions.updateProduct(product.id, {
+        name: trimmed,
+        category: product.category,
+        default_quantity: product.default_quantity,
+        unit: product.unit,
+      });
+    }
+  };
+
+  if (editing) {
+    return (
+      <Input
+        autoFocus
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit();
+          if (e.key === "Escape") setEditing(false);
+        }}
+        className="h-8 w-full px-2 font-medium"
+      />
+    );
+  }
+
+  return (
+    <button
+      onClick={start}
+      className="font-medium truncate text-right w-full hover:text-primary transition-colors cursor-text"
+      aria-label="ערוך שם מוצר"
+    >
+      {product.name}
+    </button>
+  );
+}
+
 function InlineQuantity({ product }: { product: Product }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(String(product.default_quantity));
@@ -428,7 +477,7 @@ function InlineQuantity({ product }: { product: Product }) {
           autoFocus
           type="number"
           inputMode="decimal"
-          step="any"
+          step={quantityStep(product.unit)}
           min={0}
           value={value}
           onChange={(e) => setValue(e.target.value)}
@@ -436,6 +485,16 @@ function InlineQuantity({ product }: { product: Product }) {
           onKeyDown={(e) => {
             if (e.key === "Enter") commit();
             if (e.key === "Escape") setEditing(false);
+            if (e.key === "ArrowUp") {
+              e.preventDefault();
+              const cur = parseFloat(value);
+              setValue(String(nextQuantity(Number.isFinite(cur) ? cur : 0, product.unit, 1)));
+            }
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              const cur = parseFloat(value);
+              setValue(String(nextQuantity(Number.isFinite(cur) ? cur : 0, product.unit, -1)));
+            }
           }}
           className="h-7 w-16 px-2 text-sm"
         />
