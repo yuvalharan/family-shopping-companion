@@ -271,8 +271,8 @@ function MasterListPage() {
               key={p.id}
               className="bg-surface rounded-2xl shadow-soft p-4 flex items-center justify-between gap-3"
             >
-              <div className="min-w-0">
-                <div className="font-medium truncate">{p.name}</div>
+              <div className="min-w-0 flex-1">
+                <InlineName product={p} />
                 <InlineQuantity product={p} />
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
