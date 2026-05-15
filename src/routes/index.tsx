@@ -632,12 +632,16 @@ function QuickAddPopover({
               <Input
                 type="number"
                 inputMode="decimal"
-                step="any"
+                step={quantityStep(product.unit)}
                 min={0}
                 value={qty}
                 onChange={(e) => {
                   const n = parseFloat(e.target.value);
                   setQty(Number.isFinite(n) && n > 0 ? n : 0);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowUp") { e.preventDefault(); setQty(nextQuantity(qty, product.unit, 1)); }
+                  if (e.key === "ArrowDown") { e.preventDefault(); setQty(nextQuantity(qty, product.unit, -1)); }
                 }}
                 className="h-9"
               />
