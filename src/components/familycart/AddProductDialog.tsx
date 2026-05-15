@@ -226,10 +226,21 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
           </div>
         </div>
       </div>
-      <DialogFooter className="sm:justify-start gap-2">
-        <Button onClick={submit} disabled={!name.trim()}>
-          {isEdit ? "שמור שינויים" : "הוסף"}
-        </Button>
+      <DialogFooter className="sm:justify-start gap-2 flex-wrap">
+        {isEdit ? (
+          <Button onClick={() => submit(false)} disabled={!name.trim()}>
+            שמור שינויים
+          </Button>
+        ) : (
+          <>
+            <Button onClick={() => submit(false)} disabled={!name.trim()}>
+              הוסף וסגור
+            </Button>
+            <Button onClick={() => submit(true)} disabled={!name.trim()} variant="secondary">
+              הוסף והמשך
+            </Button>
+          </>
+        )}
         <Button variant="ghost" onClick={() => handleOpenChange(false)}>ביטול</Button>
       </DialogFooter>
     </DialogContent>
