@@ -127,6 +127,7 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
           <Label htmlFor="prod-name">שם המוצר</Label>
           <Input
             id="prod-name"
+            ref={nameInputRef}
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="לדוגמה: לחם פרוס"
