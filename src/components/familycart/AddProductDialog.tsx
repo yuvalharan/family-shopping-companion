@@ -8,6 +8,7 @@ import { Plus } from "lucide-react";
 import { UNITS, type Unit, type Product } from "@/lib/familycart-data";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
 import { ProductAutocomplete } from "@/components/familycart/ProductAutocomplete";
+import { nextQuantity, quantityStep } from "@/lib/quantity-steps";
 
 
 const ADD_NEW_SENTINEL = "__add_new__";
@@ -41,6 +42,7 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
   const [newCatError, setNewCatError] = useState<string | null>(null);
   const [savingCat, setSavingCat] = useState(false);
   const newCatInputRef = useRef<HTMLInputElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -92,16 +94,25 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
     setNewCatName("");
   };
 
-  const submit = async () => {
+  const submit = async (keepOpen = false) => {
     if (!name.trim()) return;
     const safeQty = qty > 0 ? qty : 1;
     if (isEdit && product) {
       await actions.updateProduct(product.id, { name: name.trim(), category, default_quantity: safeQty, unit });
-    } else {
-      const saved = await actions.addProduct({ name: name.trim(), category, default_quantity: safeQty, unit });
-      if (saved) onProductAdded?.(saved);
+      handleOpenChange(false);
+      return;
     }
-    handleOpenChange(false);
+    const saved = await actions.addProduct({ name: name.trim(), category, default_quantity: safeQty, unit });
+    if (saved) onProductAdded?.(saved);
+    if (keepOpen) {
+      setName("");
+      setQty(1);
+      setUnit("יחידות");
+      setNameFocused(false);
+      setTimeout(() => nameInputRef.current?.focus(), 0);
+    } else {
+      handleOpenChange(false);
+    }
   };
 
   const content = (
@@ -116,6 +127,7 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
           <Label htmlFor="prod-name">שם המוצר</Label>
           <Input
             id="prod-name"
+            ref={nameInputRef}
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="לדוגמה: לחם פרוס"
@@ -183,12 +195,21 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
               id="prod-qty"
               type="number"
               inputMode="decimal"
-              step="any"
+              step={quantityStep(unit)}
               min={0}
               value={qty}
               onChange={(e) => {
                 const n = parseFloat(e.target.value);
                 setQty(Number.isFinite(n) && n > 0 ? n : 0);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setQty(nextQuantity(qty, unit, 1));
+                } else if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setQty(nextQuantity(qty, unit, -1));
+                }
               }}
             />
           </div>
@@ -205,10 +226,21 @@ export function AddProductDialog({ product, open: controlledOpen, onOpenChange, 
           </div>
         </div>
       </div>
-      <DialogFooter className="sm:justify-start gap-2">
-        <Button onClick={submit} disabled={!name.trim()}>
-          {isEdit ? "שמור שינויים" : "הוסף"}
-        </Button>
+      <DialogFooter className="sm:justify-start gap-2 flex-wrap">
+        {isEdit ? (
+          <Button onClick={() => submit(false)} disabled={!name.trim()}>
+            שמור שינויים
+          </Button>
+        ) : (
+          <>
+            <Button onClick={() => submit(false)} disabled={!name.trim()}>
+              הוסף וסגור
+            </Button>
+            <Button onClick={() => submit(true)} disabled={!name.trim()} variant="secondary">
+              הוסף והמשך
+            </Button>
+          </>
+        )}
         <Button variant="ghost" onClick={() => handleOpenChange(false)}>ביטול</Button>
       </DialogFooter>
     </DialogContent>

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Pencil, Trash2, Search, X, Plus, ShoppingCart, PackagePlus, CirclePlus, Download, ArrowUpDown, Check } from "lucide-react";
+import { Pencil, Trash2, Search, X, Plus, ShoppingCart, PackagePlus, CirclePlus, Download, ArrowUpDown, Check, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/familycart/AppHeader";
 import { AddProductDialog } from "@/components/familycart/AddProductDialog";
@@ -24,6 +24,7 @@ import {
 import { type Product, type Unit } from "@/lib/familycart-data";
 import { actions, useFamilyCart } from "@/lib/familycart-store";
 import { formatQuantity } from "@/lib/units";
+import { nextQuantity, quantityStep } from "@/lib/quantity-steps";
 import { useAuth } from "@/lib/auth";
 
 
@@ -44,6 +45,7 @@ function MasterListPage() {
   const { user } = useAuth();
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   
   const [addOpen, setAddOpen] = useState(false);
   const [prefill, setPrefill] = useState<ProductSuggestion | null>(null);
@@ -132,13 +134,20 @@ function MasterListPage() {
       <main className="mx-auto max-w-xl px-4 py-6 pb-32 space-y-5">
         {!isEmpty && !loading && (
           <>
-            <div className="flex justify-end gap-3">
+            <div className="flex justify-end gap-3 flex-wrap">
               <button
                 onClick={() => setImportOpen(true)}
                 className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 <Download className="size-4" />
                 ייבא מוצרים נפוצים
+              </button>
+              <button
+                onClick={() => setConfirmDeleteAll(true)}
+                className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-destructive transition-colors"
+              >
+                <Trash2 className="size-4" />
+                מחק הכל
               </button>
             </div>
 
@@ -198,6 +207,22 @@ function MasterListPage() {
                   ))}
                 </PopoverContent>
               </Popover>
+              {sortBy === "category" && grouped.length > 0 && (() => {
+                const allExpanded = grouped.every((g) => expanded.has(g.category));
+                return (
+                  <button
+                    onClick={() => {
+                      if (allExpanded) setExpanded(new Set());
+                      else setExpanded(new Set(grouped.map((g) => g.category)));
+                    }}
+                    aria-label={allExpanded ? "כווץ הכל" : "פתח הכל"}
+                    className="h-11 px-3 rounded-xl border border-input bg-background hover:bg-muted flex items-center gap-1.5 text-sm text-foreground shrink-0"
+                  >
+                    {allExpanded ? <ChevronsDownUp className="size-4" /> : <ChevronsUpDown className="size-4" />}
+                    <span>{allExpanded ? "כווץ הכל" : "פתח הכל"}</span>
+                  </button>
+                );
+              })()}
             </div>
 
 
@@ -246,8 +271,8 @@ function MasterListPage() {
               key={p.id}
               className="bg-surface rounded-2xl shadow-soft p-4 flex items-center justify-between gap-3"
             >
-              <div className="min-w-0">
-                <div className="font-medium truncate">{p.name}</div>
+              <div className="min-w-0 flex-1">
+                <InlineName product={p} />
                 <InlineQuantity product={p} />
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
@@ -345,7 +370,80 @@ function MasterListPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <AlertDialog open={confirmDeleteAll} onOpenChange={setConfirmDeleteAll}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-right">
+              האם למחוק את כל המוצרים מהרשימה הראשית?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-right">
+              פעולה זו תמחק את כל המוצרים במרחב הנוכחי ולא ניתן לבטלה.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-start gap-2">
+            <AlertDialogAction
+              onClick={() => {
+                actions.removeAllProducts();
+                setConfirmDeleteAll(false);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              מחק הכל
+            </AlertDialogAction>
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
+  );
+}
+
+function InlineName({ product }: { product: Product }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(product.name);
+
+  const start = () => {
+    setValue(product.name);
+    setEditing(true);
+  };
+
+  const commit = () => {
+    const trimmed = value.trim();
+    setEditing(false);
+    if (trimmed && trimmed !== product.name) {
+      actions.updateProduct(product.id, {
+        name: trimmed,
+        category: product.category,
+        default_quantity: product.default_quantity,
+        unit: product.unit,
+      });
+    }
+  };
+
+  if (editing) {
+    return (
+      <Input
+        autoFocus
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit();
+          if (e.key === "Escape") setEditing(false);
+        }}
+        className="h-8 w-full px-2 font-medium"
+      />
+    );
+  }
+
+  return (
+    <button
+      onClick={start}
+      className="font-medium truncate text-right w-full hover:text-primary transition-colors cursor-text"
+      aria-label="ערוך שם מוצר"
+    >
+      {product.name}
+    </button>
   );
 }
 
@@ -379,7 +477,7 @@ function InlineQuantity({ product }: { product: Product }) {
           autoFocus
           type="number"
           inputMode="decimal"
-          step="any"
+          step={quantityStep(product.unit)}
           min={0}
           value={value}
           onChange={(e) => setValue(e.target.value)}
@@ -387,6 +485,16 @@ function InlineQuantity({ product }: { product: Product }) {
           onKeyDown={(e) => {
             if (e.key === "Enter") commit();
             if (e.key === "Escape") setEditing(false);
+            if (e.key === "ArrowUp") {
+              e.preventDefault();
+              const cur = parseFloat(value);
+              setValue(String(nextQuantity(Number.isFinite(cur) ? cur : 0, product.unit, 1)));
+            }
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              const cur = parseFloat(value);
+              setValue(String(nextQuantity(Number.isFinite(cur) ? cur : 0, product.unit, -1)));
+            }
           }}
           className="h-7 w-16 px-2 text-sm"
         />
@@ -484,12 +592,16 @@ function QuickAddPopover({
               <Input
                 type="number"
                 inputMode="decimal"
-                step="any"
+                step={quantityStep(product.unit)}
                 min={0}
                 value={qty}
                 onChange={(e) => {
                   const n = parseFloat(e.target.value);
                   setQty(Number.isFinite(n) && n > 0 ? n : 0);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowUp") { e.preventDefault(); setQty(nextQuantity(qty, product.unit, 1)); }
+                  if (e.key === "ArrowDown") { e.preventDefault(); setQty(nextQuantity(qty, product.unit, -1)); }
                 }}
                 className="h-9"
               />
@@ -520,12 +632,16 @@ function QuickAddPopover({
               <Input
                 type="number"
                 inputMode="decimal"
-                step="any"
+                step={quantityStep(product.unit)}
                 min={0}
                 value={qty}
                 onChange={(e) => {
                   const n = parseFloat(e.target.value);
                   setQty(Number.isFinite(n) && n > 0 ? n : 0);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowUp") { e.preventDefault(); setQty(nextQuantity(qty, product.unit, 1)); }
+                  if (e.key === "ArrowDown") { e.preventDefault(); setQty(nextQuantity(qty, product.unit, -1)); }
                 }}
                 className="h-9"
               />

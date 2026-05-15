@@ -355,6 +355,23 @@ export const actions = {
     toast.success("המוצר הוסר");
   },
 
+  async removeAllProducts() {
+    const sid = activeSpaceIdOrNull();
+    if (!sid) return;
+    const ids = state.products.filter((p) => p.space_id === sid).map((p) => p.id);
+    if (ids.length === 0) { toast.info("אין מוצרים למחיקה"); return; }
+    const { error } = await supabase.from("products").delete().eq("space_id", sid);
+    if (error) { toast.error("שגיאה במחיקה, אנא נסה שוב"); return; }
+    const idSet = new Set(ids);
+    state = {
+      ...state,
+      products: state.products.filter((p) => !idSet.has(p.id)),
+      items: state.items.filter((i) => !idSet.has(i.product_id)),
+    };
+    emit();
+    toast.success("כל המוצרים נמחקו");
+  },
+
   async createShoppingList(name: string, spaceId?: string): Promise<ShoppingList | null> {
     const trimmed = name.trim();
     if (!trimmed) return null;
