@@ -207,6 +207,22 @@ function MasterListPage() {
                   ))}
                 </PopoverContent>
               </Popover>
+              {sortBy === "category" && grouped.length > 0 && (() => {
+                const allExpanded = grouped.every((g) => expanded.has(g.category));
+                return (
+                  <button
+                    onClick={() => {
+                      if (allExpanded) setExpanded(new Set());
+                      else setExpanded(new Set(grouped.map((g) => g.category)));
+                    }}
+                    aria-label={allExpanded ? "כווץ הכל" : "פתח הכל"}
+                    className="h-11 px-3 rounded-xl border border-input bg-background hover:bg-muted flex items-center gap-1.5 text-sm text-foreground shrink-0"
+                  >
+                    {allExpanded ? <ChevronsDownUp className="size-4" /> : <ChevronsUpDown className="size-4" />}
+                    <span>{allExpanded ? "כווץ הכל" : "פתח הכל"}</span>
+                  </button>
+                );
+              })()}
             </div>
 
 
