@@ -134,13 +134,20 @@ function MasterListPage() {
       <main className="mx-auto max-w-xl px-4 py-6 pb-32 space-y-5">
         {!isEmpty && !loading && (
           <>
-            <div className="flex justify-end gap-3">
+            <div className="flex justify-end gap-3 flex-wrap">
               <button
                 onClick={() => setImportOpen(true)}
                 className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 <Download className="size-4" />
                 ייבא מוצרים נפוצים
+              </button>
+              <button
+                onClick={() => setConfirmDeleteAll(true)}
+                className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-destructive transition-colors"
+              >
+                <Trash2 className="size-4" />
+                מחק הכל
               </button>
             </div>
 
