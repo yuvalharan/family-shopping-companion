@@ -42,11 +42,12 @@ export const Route = createFileRoute("/")({
 });
 
 function MasterListPage() {
-  const { products, loading, categories, lists } = useFamilyCart();
+  const { products, loading, categories, lists, spaces, activeSpace } = useFamilyCart();
   const { user } = useAuth();
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [copyOpen, setCopyOpen] = useState(false);
   
   const [addOpen, setAddOpen] = useState(false);
   const [prefill, setPrefill] = useState<ProductSuggestion | null>(null);
