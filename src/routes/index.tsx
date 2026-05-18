@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Pencil, Trash2, Search, X, Plus, ShoppingCart, PackagePlus, CirclePlus, Download, ArrowUpDown, Check, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
+import { Pencil, Trash2, Search, X, Plus, ShoppingCart, PackagePlus, CirclePlus, Download, ArrowUpDown, Check, ChevronsDownUp, ChevronsUpDown, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/familycart/AppHeader";
 import { AddProductDialog } from "@/components/familycart/AddProductDialog";
 
 import { ImportProductsDialog } from "@/components/familycart/ImportProductsDialog";
+import { CopyToSpaceDialog } from "@/components/familycart/CopyToSpaceDialog";
 import { ProductAutocomplete, type ProductSuggestion } from "@/components/familycart/ProductAutocomplete";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -41,11 +42,12 @@ export const Route = createFileRoute("/")({
 });
 
 function MasterListPage() {
-  const { products, loading, categories, lists } = useFamilyCart();
+  const { products, loading, categories, lists, spaces, activeSpace } = useFamilyCart();
   const { user } = useAuth();
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [copyOpen, setCopyOpen] = useState(false);
   
   const [addOpen, setAddOpen] = useState(false);
   const [prefill, setPrefill] = useState<ProductSuggestion | null>(null);
@@ -142,6 +144,15 @@ function MasterListPage() {
                 <Download className="size-4" />
                 ייבא מוצרים נפוצים
               </button>
+              {spaces.some((s) => !s.is_personal && s.id !== activeSpace?.id) && products.length > 0 && (
+                <button
+                  onClick={() => setCopyOpen(true)}
+                  className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Copy className="size-4" />
+                  העתק לחלל משותף
+                </button>
+              )}
               <button
                 onClick={() => setConfirmDeleteAll(true)}
                 className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-destructive transition-colors"
@@ -343,6 +354,7 @@ function MasterListPage() {
       )}
       
       <ImportProductsDialog open={importOpen} onOpenChange={setImportOpen} />
+      <CopyToSpaceDialog open={copyOpen} onOpenChange={setCopyOpen} />
       <ImportProductsDialog
         open={setupOpen}
         onOpenChange={setSetupOpen}
