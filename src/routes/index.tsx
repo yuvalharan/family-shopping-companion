@@ -144,6 +144,15 @@ function MasterListPage() {
                 <Download className="size-4" />
                 ייבא מוצרים נפוצים
               </button>
+              {spaces.some((s) => !s.is_personal && s.id !== activeSpace?.id) && products.length > 0 && (
+                <button
+                  onClick={() => setCopyOpen(true)}
+                  className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Copy className="size-4" />
+                  העתק לחלל משותף
+                </button>
+              )}
               <button
                 onClick={() => setConfirmDeleteAll(true)}
                 className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-destructive transition-colors"
