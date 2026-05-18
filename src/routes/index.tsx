@@ -6,6 +6,7 @@ import { AppHeader } from "@/components/familycart/AppHeader";
 import { AddProductDialog } from "@/components/familycart/AddProductDialog";
 
 import { ImportProductsDialog } from "@/components/familycart/ImportProductsDialog";
+import { CopyToSpaceDialog } from "@/components/familycart/CopyToSpaceDialog";
 import { ProductAutocomplete, type ProductSuggestion } from "@/components/familycart/ProductAutocomplete";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
