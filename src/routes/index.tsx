@@ -354,6 +354,7 @@ function MasterListPage() {
       )}
       
       <ImportProductsDialog open={importOpen} onOpenChange={setImportOpen} />
+      <CopyToSpaceDialog open={copyOpen} onOpenChange={setCopyOpen} />
       <ImportProductsDialog
         open={setupOpen}
         onOpenChange={setSetupOpen}
